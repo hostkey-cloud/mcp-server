@@ -1,6 +1,7 @@
 {
   "name": "hostkey-mcp-server",
   "version": "1.0.0",
+  "mcpName": "io.github.hostkey-cloud/mcp-server",
   "description": "MCP server for Hostkey .com portal (InvAPI invapi.hostkey.com): servers, power, ordering, reinstall, DNS, S3, billing",
   "license": "MIT",
   "type": "module",
