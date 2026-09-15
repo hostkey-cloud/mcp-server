@@ -23,13 +23,6 @@ DNS writes need the `pdns/edit` permission.
 
 ## 2. Install
 
-Node.js ≥ 20.
-
-```bash
-npm install
-npm run build
-```
-
 ### Cursor
 
 `.cursor/mcp.json`:
@@ -38,8 +31,8 @@ npm run build
 {
   "mcpServers": {
     "hostkey-mcp-server": {
-      "command": "node",
-      "args": ["/absolute/path/to/hostkey-mcp-server/dist/index.mjs"],
+      "command": "npx",
+      "args": ["-y", "hostkey-mcp-server"],
       "env": {
         "HOSTKEY_API_KEY": "your-api-key"
       }
@@ -56,8 +49,8 @@ npm run build
 {
   "mcp.servers": {
     "hostkey-mcp-server": {
-      "command": "node",
-      "args": ["/absolute/path/to/hostkey-mcp-server/dist/index.mjs"],
+      "command": "npx",
+      "args": ["-y", "hostkey-mcp-server"],
       "env": {
         "HOSTKEY_API_KEY": "your-api-key"
       }
@@ -68,6 +61,8 @@ npm run build
 
 Optional: `HOSTKEY_TOKEN_TTL`, `HOSTKEY_HTTP_TIMEOUT`, `HOSTKEY_ALLOW_DESTRUCTIVE`
 (see `.env.example`).
+
+From source (Node.js ≥ 20): `npm install && npm run build`.
 
 ## 3. Confirming dangerous operations
 
