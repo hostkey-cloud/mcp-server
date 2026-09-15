@@ -1,0 +1,40 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "io.github.hostkey-cloud/mcp-server",
+  "description": "MCP server for Hostkey .com portal (InvAPI invapi.hostkey.com): servers, power control, ordering, OS reinstall, network, DNS, S3 storage, billing",
+  "version": "0.3.0",
+  "repository": {
+    "url": "https://github.com/hostkey-cloud/mcp-server",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "hostkey-mcp-server",
+      "version": "0.3.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "HOSTKEY_API_KEY",
+          "description": "InvAPI API key for the .com portal (invapi.hostkey.com); per-server keys supported",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "HOSTKEY_TOKEN_TTL",
+          "description": "Session token TTL in seconds (default 3600)",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "HOSTKEY_ALLOW_DESTRUCTIVE",
+          "description": "Set to 1 to allow destructive operations (OS reinstall, PXE cycle, service cancellation)",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}

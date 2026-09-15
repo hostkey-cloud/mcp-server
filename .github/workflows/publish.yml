@@ -1,0 +1,26 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  id-token: write # OIDC для npm Trusted Publishing (provenance)
+  contents: read
+
+jobs:
+  npm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm run typecheck && npm run build
+      # NPM_TOKEN не нужен: публикация через Trusted Publishing (OIDC).
+      # Предварительно настроить на npmjs.com: package -> Settings -> Trusted Publisher
+      # -> GitHub Actions -> репозиторий + этот файл workflow. См. PUBLISHING.md, шаг 2.
+      - run: npm publish --provenance --access public
