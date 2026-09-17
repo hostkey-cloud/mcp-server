@@ -25,7 +25,11 @@ DNS writes need the `pdns/edit` permission.
 
 ### Cursor
 
-`.cursor/mcp.json`:
+[![Install in Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=hostkey-mcp-server&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsImhvc3RrZXktbWNwLXNlcnZlciJdLCJlbnYiOnsiSE9TVEtFWV9BUElfS0VZIjoiWU9VUl9BUElfS0VZIn19)
+
+Click the button, replace `YOUR_API_KEY` with your InvAPI key, then confirm.
+
+Or add to `.cursor/mcp.json` manually:
 
 ```json
 {
