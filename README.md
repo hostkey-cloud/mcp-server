@@ -2,6 +2,7 @@
 
 MCP server for [Hostkey](https://hostkey.com/) (**.com** portal, InvAPI `invapi.hostkey.com`).
 Runs locally over stdio — Cursor, VS Code, and other MCP clients.
+Hosted remote: `https://mcp.hostkey.com/mcp` (cloud agents).
 
 | | |
 |---|---|
@@ -39,6 +40,23 @@ Or add to `.cursor/mcp.json` manually:
       "args": ["-y", "hostkey-mcp-server"],
       "env": {
         "HOSTKEY_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+### Remote (cloud agents)
+
+No local Node/`npx`. Point the client at the hosted endpoint and send your InvAPI key:
+
+```json
+{
+  "mcpServers": {
+    "hostkey": {
+      "url": "https://mcp.hostkey.com/mcp",
+      "headers": {
+        "Authorization": "Bearer your-api-key"
       }
     }
   }
