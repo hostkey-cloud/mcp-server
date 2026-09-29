@@ -16,36 +16,36 @@ export function registerPrompts(server: McpServer): void {
     "order_server_prompt",
     {
       description:
-        "Мастер заказа сервера Hostkey: локация → пресет → ОС → ПО → трафик-план → подтверждение стоимости → заказ.",
+        "Guided Hostkey server order: location → preset → OS → software → traffic plan → cost confirmation → order.",
       argsSchema: {
         location: z
           .string()
           .optional()
           .describe(
-            "Желаемая локация (NL/US/FI/DE/IS/TR/UK/ES/IT/PL/CH), если известна",
+            "Desired location (NL/US/FI/DE/IS/TR/UK/ES/IT/PL/CH), if known",
           ),
         purpose: z
           .string()
           .optional()
           .describe(
-            "Назначение сервера (сайт, GPU-инференс, БД…), если известно",
+            "Server purpose (website, GPU inference, DB…), if known",
           ),
       },
     },
     ({ location, purpose }) =>
       userMessage(
         [
-          "Помоги заказать сервер в Hostkey, действуя строго по шагам:",
+          "Help order a Hostkey server, following these steps strictly:",
           "",
-          `1. Локация: ${location ? `пользователь выбрал ${location}` : "уточни у пользователя желаемую локацию (NL/US/FI/DE/IS/TR/UK/ES/IT/PL/CH)"}.`,
-          `2. Пресет: ${purpose ? `назначение — ${purpose}. ` : ""}Вызови list_presets для выбранной локации, предложи 2–3 подходящих пресета с ценами (get_preset_pricing) и дождись выбора пользователя.`,
-          "3. ОС: вызови list_os для выбранного пресета (instance_id) и предложи варианты; дождись выбора os_id.",
-          "4. ПО: вызови list_software и предложи marketplace-приложения, если уместно (soft_id опционален).",
-          "5. Трафик: вызови list_traffic_plans и предложи трафик-план (traffic_plan).",
-          "6. Параметры доступа: попроси root-пароль (мин. 8 символов, заглавная буква, цифра, спецсимвол, без @ и #) или публичный SSH-ключ, а также желаемый hostname и период оплаты (monthly/quarterly/semi-annually/annually).",
-          "7. Обязательно выполни order_server с dry_run=true и покажи пользователю сводку с ориентировочной стоимостью.",
-          "8. Только после ЯВНОГО согласия пользователя на стоимость повтори order_server с dry_run=false и confirm=true.",
-          "9. Сохрани callback-ключ из ответа и сообщи, что деплой занимает 10–30 минут; предложи проверить статус через check_task. Напомни: доступы придут на email при deploy_notify=true.",
+          `1. Location: ${location ? `user chose ${location}` : "ask the user for the desired location (NL/US/FI/DE/IS/TR/UK/ES/IT/PL/CH)"}.`,
+          `2. Preset: ${purpose ? `purpose — ${purpose}. ` : ""}Call list_presets for the chosen location, suggest 2–3 suitable presets with prices (get_preset_pricing), and wait for the user to choose.`,
+          "3. OS: call list_os for the chosen preset (instance_id) and suggest options; wait for os_id selection.",
+          "4. Software: call list_software and suggest marketplace apps if relevant (soft_id is optional).",
+          "5. Traffic: call list_traffic_plans and suggest a traffic plan (traffic_plan).",
+          "6. Access: ask for a root password (min. 8 chars, uppercase, digit, special char, no @ or #) or a public SSH key, plus desired hostname and billing period (monthly/quarterly/semi-annually/annually).",
+          "7. Always run order_server with dry_run=true and show the user a summary with estimated cost.",
+          "8. Only after EXPLICIT user consent on the cost, call order_server again with dry_run=false and confirm=true.",
+          "9. Keep the callback key from the response and tell the user deploy takes 10–30 minutes; offer to check status via check_task. Reminder: credentials arrive by email when deploy_notify=true.",
         ].join("\n"),
       ),
   );
@@ -54,24 +54,24 @@ export function registerPrompts(server: McpServer): void {
     "reinstall_server_prompt",
     {
       description:
-        "Мастер переустановки ОС на сервере Hostkey с проверками и отслеживанием прогресса.",
+        "Guided Hostkey OS reinstall with checks and progress tracking.",
       argsSchema: {
-        server_id: z.string().optional().describe("ID сервера, если известен"),
+        server_id: z.string().optional().describe("Server ID, if known"),
       },
     },
     ({ server_id }) =>
       userMessage(
         [
-          "Помоги переустановить ОС на сервере Hostkey, действуя строго по шагам:",
+          "Help reinstall the OS on a Hostkey server, following these steps strictly:",
           "",
-          `1. ${server_id ? `ID сервера: ${server_id}.` : "Выясни ID сервера: вызови get_servers и предложи пользователю выбрать."}`,
-          "2. Вызови get_server и get_power_status, покажи текущее состояние и hostname сервера.",
-          "3. ЯВНО предупреди пользователя: переустановка удалит ВСЕ данные на дисках. Дождись подтверждения.",
-          "4. Вызови list_os для этого сервера, предложи варианты ОС; дождись выбора os_id. При желании пользователя — list_software (soft_id).",
-          "5. Собери параметры: новый root-пароль или SSH-ключ, deploy_notify.",
-          "6. Вызови reinstall_server с confirm=true и текущим hostname сервера. Если инструмент ответил, что деструктивные операции отключены — объясни пользователю, как включить HOSTKEY_ALLOW_DESTRUCTIVE=1.",
-          '7. Сохрани callback-ключ и отслеживай прогресс через check_task до result="OK". Не запускай вторую переустановку, пока идёт текущая.',
-          "8. После завершения напомни: пароль root новый; уведомление на email при этом способе может не прийти.",
+          `1. ${server_id ? `Server ID: ${server_id}.` : "Determine the server ID: call get_servers and ask the user to pick one."}`,
+          "2. Call get_server and get_power_status; show current state and hostname.",
+          "3. EXPLICITLY warn the user: reinstall will erase ALL data on the disks. Wait for confirmation.",
+          "4. Call list_os for this server, suggest OS options; wait for os_id. If the user wants software — list_software (soft_id).",
+          "5. Collect parameters: new root password or SSH key, deploy_notify.",
+          "6. Call reinstall_server with confirm=true and the server's current hostname. If the tool says destructive ops are disabled — explain how to set HOSTKEY_ALLOW_DESTRUCTIVE=1.",
+          '7. Keep the callback key and track progress with check_task until result="OK". Do not start a second reinstall while one is running.',
+          "8. After completion, remind: root password is new; email notification may not arrive with this method.",
         ].join("\n"),
       ),
   );
@@ -80,20 +80,20 @@ export function registerPrompts(server: McpServer): void {
     "troubleshoot_server_prompt",
     {
       description:
-        "Диагностика проблем с сервером Hostkey: питание, сенсоры, сеть — с рекомендациями.",
+        "Diagnose Hostkey server issues: power, sensors, network — with recommendations.",
       argsSchema: {
-        server_id: z.string().optional().describe("ID сервера, если известен"),
+        server_id: z.string().optional().describe("Server ID, if known"),
       },
     },
     ({ server_id }) =>
       userMessage(
         [
-          "Помоги диагностировать проблему с сервером Hostkey, действуя по шагам:",
+          "Help diagnose a Hostkey server problem, following these steps:",
           "",
-          `1. ${server_id ? `ID сервера: ${server_id}.` : "Выясни ID сервера через get_servers (можно фильтровать по IP или тегам: search_servers_by_tag)."}`,
-          "2. Собери картину: get_server (карточка), get_power_status (питание), для bare-metal — get_server_sensors (температуры/напряжения).",
-          "3. Проанализируй: сервер выключен → предложи power_on (с confirm=true, только с согласия пользователя). Аномалии сенсоров (перегрев, сбой PSU) → рекомендуй обращение в поддержку / remote hands через панель Invapi.",
-          "4. Сформулируй краткое резюме: состояние, вероятная причина, рекомендуемые действия. Деструктивные действия (power_off, reboot_server, reinstall_server) — только после явного согласия пользователя.",
+          `1. ${server_id ? `Server ID: ${server_id}.` : "Determine the server ID via get_servers (filter by IP or tags: search_servers_by_tag)."}`,
+          "2. Gather state: get_server (card), get_power_status (power), for bare-metal — get_server_sensors (temps/voltages).",
+          "3. Analyze: server off → suggest power_on (with confirm=true, only with user consent). Sensor anomalies (overheat, PSU fault) → recommend support / Remote Hands via the InvAPI panel.",
+          "4. Give a short summary: state, likely cause, recommended actions. Destructive actions (power_off, reboot_server, reinstall_server) — only after explicit user consent.",
         ].join("\n"),
       ),
   );

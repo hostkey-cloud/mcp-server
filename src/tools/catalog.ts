@@ -5,7 +5,7 @@ import { ok, fail } from "./helpers.js";
 
 const locationParam = z
   .string()
-  .describe("Локация: NL/US/FI/DE/IS/TR/UK/ES/IT/PL/CH");
+  .describe("Location: NL/US/FI/DE/IS/TR/UK/ES/IT/PL/CH");
 
 /** Catalog: presets, stock, OS, software, traffic plans. */
 export function registerCatalogTools(
@@ -16,7 +16,7 @@ export function registerCatalogTools(
     "list_presets",
     {
       description:
-        "Актуальный список доступных instant-серверов (VM/BM/GPU/vGPU) с ценами в указанной локации. Токен не требуется. Нужен для подбора preset перед заказом.",
+        "Current list of available instant servers (VM/BM/GPU/vGPU) with prices for a location. No token required. Use to pick a preset before ordering.",
       inputSchema: { location: locationParam },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
@@ -35,14 +35,14 @@ export function registerCatalogTools(
     "search_presets",
     {
       description:
-        "Поиск подходящих свободных серверов под конкретный пресет по имени (например, vm.pico). Требует авторизации.",
+        "Search free servers matching a preset name (e.g. vm.pico). Requires auth.",
       inputSchema: {
-        name: z.string().describe("Имя пресета, например vm.pico"),
+        name: z.string().describe("Preset name, e.g. vm.pico"),
         location: locationParam,
         scope: z
           .enum(["free", "all"])
           .optional()
-          .describe("free (по умолчанию) — только свободные"),
+          .describe("free (default) — available only"),
       },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
@@ -64,13 +64,13 @@ export function registerCatalogTools(
     "get_preset_pricing",
     {
       description:
-        "Цены на доступные пресеты в указанных валютах (presets/info). Токен не требуется.",
+        "Prices for available presets in given currencies (presets/info). No token required.",
       inputSchema: {
         currencies: z
           .string()
           .optional()
           .describe(
-            "Коды валют через запятую, например EUR,USD. По умолчанию EUR",
+            "Currency codes, comma-separated, e.g. EUR,USD. Default EUR",
           ),
       },
       annotations: { readOnlyHint: true, openWorldHint: true },
@@ -95,7 +95,7 @@ export function registerCatalogTools(
     "list_preset_groups",
     {
       description:
-        "Список групп пресетов для категоризации каталога (presets/groups). Токен не требуется.",
+        "Preset groups for catalog categories (presets/groups). No token required.",
       inputSchema: {},
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
@@ -112,13 +112,13 @@ export function registerCatalogTools(
     "get_preset",
     {
       description:
-        "Информация о конкретном пресете или обо всех пресетах (presets/show). Может требовать авторизации в зависимости от прав.",
+        "Details for one preset or all presets (presets/show). May require auth depending on permissions.",
       inputSchema: {
         id: z
           .number()
           .int()
           .optional()
-          .describe("ID пресета; без него — список всех"),
+          .describe("Preset ID; omit for full list"),
       },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
@@ -135,13 +135,13 @@ export function registerCatalogTools(
     "list_stock_servers",
     {
       description:
-        "Список доступных stock-серверов (физические серверы стандартных конфигураций, деплой в течение рабочего дня). Токен не требуется.",
+        "Available stock servers (physical servers of standard configs; deploy within a business day). No token required.",
       inputSchema: {
         location: locationParam,
         group: z
           .enum(["ALL", "1CPU", "2CPU", "GPU", "AMD", "AMD-MODERN", "INTEL"])
           .describe(
-            "Группа серверов; GPU-серверы не входят в остальные группы",
+            "Server group; GPU servers are not included in other groups",
           ),
       },
       annotations: { readOnlyHint: true, openWorldHint: true },
@@ -159,9 +159,9 @@ export function registerCatalogTools(
     "get_stock_server",
     {
       description:
-        "Детальная информация о конкретном stock-сервере (stocks/show).",
+        "Details for a specific stock server (stocks/show).",
       inputSchema: {
-        id: z.number().int().describe("ID stock-сервера из list_stock_servers"),
+        id: z.number().int().describe("Stock server ID from list_stock_servers"),
       },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
@@ -178,13 +178,13 @@ export function registerCatalogTools(
     "list_os",
     {
       description:
-        "Список операционных систем, доступных для установки на пресет/сервер (os/list). Без instance_id возвращает ОС для всех пресетов. Токен не требуется.",
+        "Operating systems available for a preset/server (os/list). Without instance_id returns OS for all presets. No token required.",
       inputSchema: {
         instance_id: z
           .number()
           .int()
           .optional()
-          .describe("ID пресета из list_presets"),
+          .describe("Preset ID from list_presets"),
       },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
@@ -203,14 +203,14 @@ export function registerCatalogTools(
     "list_software",
     {
       description:
-        "Список ПО (marketplace-приложений), доступного для автоустановки на сервер (software/list). Токен не требуется.",
+        "Software (marketplace apps) available for auto-install (software/list). No token required.",
       inputSchema: {
         location: locationParam.optional(),
         instance_id: z
           .number()
           .int()
           .optional()
-          .describe("ID пресета из list_presets"),
+          .describe("Preset ID from list_presets"),
       },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
@@ -227,10 +227,10 @@ export function registerCatalogTools(
     "list_traffic_plans",
     {
       description:
-        "Доступные тарифные планы трафика для пресета в локации (traffic_plans/list). Токен не требуется.",
+        "Available traffic plans for a preset in a location (traffic_plans/list). No token required.",
       inputSchema: {
         location: locationParam,
-        instance_id: z.number().int().describe("ID пресета из list_presets"),
+        instance_id: z.number().int().describe("Preset ID from list_presets"),
       },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

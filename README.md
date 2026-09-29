@@ -13,8 +13,6 @@ Hosted remote: `https://mcp.hostkey.com/mcp` (cloud agents).
 Gives the model access to your Hostkey account: servers, catalog and ordering, power, OS reinstall,
 network, DNS, snapshots, IPMI/console, ISO, S3, Remote Hands, billing, and API keys.
 
-For the **.ru** portal use the separate package `hostkey-mcp-server-ru`.
-
 ## 1. Get an API key
 
 [InvAPI](https://invapi.hostkey.com) → API keys → create a key.

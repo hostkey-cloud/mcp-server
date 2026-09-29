@@ -3,12 +3,12 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { InvApiClient } from "../client.js";
 import { ok, fail, note, type ToolResult } from "./helpers.js";
 
-const idParam = { id: z.number().int().describe("ID сервера") };
+const idParam = { id: z.number().int().describe("Server ID") };
 const confirmParam = {
   confirm: z
     .boolean()
     .describe(
-      "Обязательное подтверждение операции. Без confirm=true вызов отклоняется.",
+      "Required confirmation. Without confirm=true the call is rejected.",
     ),
 };
 
@@ -19,8 +19,8 @@ async function guarded(
 ): Promise<ToolResult> {
   if (!confirm) {
     return note(
-      `Операция «${what}» не выполнена: требуется явное подтверждение. ` +
-        `Если пользователь согласен, повторите вызов с confirm=true.`,
+      `Operation "${what}" was not run: explicit confirmation required. ` +
+        `If the user agrees, call again with confirm=true.`,
     );
   }
   try {
@@ -28,7 +28,7 @@ async function guarded(
     const callback = res?.callback;
     const suffix =
       typeof callback === "string"
-        ? `\n\nОперация асинхронная. Callback-ключ: ${callback}. Проверяйте статус инструментом check_task.`
+        ? `\n\nAsync job. Callback: ${callback}. Track with check_task.`
         : "";
     return ok(`${JSON.stringify(res, null, 2)}${suffix}`);
   } catch (e) {
@@ -45,7 +45,7 @@ export function registerPowerTools(
     "power_on",
     {
       description:
-        "Включить сервер (eq/on). Асинхронная операция: в ответе будет callback-ключ для check_task.",
+        "Power on a server (eq/on). Async: response includes a callback key for check_task.",
       inputSchema: { ...idParam, ...confirmParam },
       annotations: {
         readOnlyHint: false,
@@ -55,7 +55,7 @@ export function registerPowerTools(
       },
     },
     async ({ id, confirm }) =>
-      guarded(confirm, `включение сервера ${id}`, () =>
+      guarded(confirm, `power on server ${id}`, () =>
         client.call("eq", "on", { id }),
       ),
   );
@@ -64,8 +64,8 @@ export function registerPowerTools(
     "power_off",
     {
       description:
-        "Выключить сервер (eq/off). ДЕСТРУКТИВНО: прерывает работу всех сервисов на сервере. " +
-        "Требует confirm=true. Асинхронная операция: в ответе будет callback-ключ для check_task.",
+        "Power off a server (eq/off). DESTRUCTIVE: interrupts all services on the server. " +
+        "Requires confirm=true. Async: response includes a callback key for check_task.",
       inputSchema: { ...idParam, ...confirmParam },
       annotations: {
         readOnlyHint: false,
@@ -75,7 +75,7 @@ export function registerPowerTools(
       },
     },
     async ({ id, confirm }) =>
-      guarded(confirm, `выключение сервера ${id}`, () =>
+      guarded(confirm, `power off server ${id}`, () =>
         client.call("eq", "off", { id }),
       ),
   );
@@ -84,8 +84,8 @@ export function registerPowerTools(
     "reboot_server",
     {
       description:
-        "Перезагрузить сервер (eq/reboot). Прерывает работу сервисов на время перезагрузки. " +
-        "Требует confirm=true. Асинхронная операция: в ответе будет callback-ключ для check_task.",
+        "Reboot a server (eq/reboot). Interrupts services during reboot. " +
+        "Requires confirm=true. Async: response includes a callback key for check_task.",
       inputSchema: { ...idParam, ...confirmParam },
       annotations: {
         readOnlyHint: false,
@@ -95,7 +95,7 @@ export function registerPowerTools(
       },
     },
     async ({ id, confirm }) =>
-      guarded(confirm, `перезагрузка сервера ${id}`, () =>
+      guarded(confirm, `reboot server ${id}`, () =>
         client.call("eq", "reboot", { id }),
       ),
   );

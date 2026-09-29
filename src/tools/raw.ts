@@ -14,32 +14,32 @@ export function registerRawTool(server: McpServer, client: InvApiClient): void {
     "call_api_raw",
     {
       description:
-        "Универсальный прямой вызов InvAPI по ресурсу и action, для ресурсов без типизированных инструментов " +
-        "(например: iso — библиотека ISO-образов, s3 — S3 Object Storage, rhr — Remote Hands новой версии; " +
-        "список действий смотрите в документации: https://hostkey.com/documentation/apidocs/). " +
-        "ВСЕГДА требует confirm=true; деструктивные/платные действия дополнительно требуют HOSTKEY_ALLOW_DESTRUCTIVE=1. " +
-        "Предпочитайте типизированные инструменты, если они есть для нужной операции.",
+        "Universal direct InvAPI call by resource and action, for resources without typed tools " +
+        "(e.g.: iso — ISO image library, s3 — S3 Object Storage, rhr — Remote Hands new version; " +
+        "see action list in the docs: https://hostkey.com/documentation/apidocs/). " +
+        "ALWAYS requires confirm=true; destructive/paid actions additionally require HOSTKEY_ALLOW_DESTRUCTIVE=1. " +
+        "Prefer typed tools when they exist for the needed operation.",
       inputSchema: {
         resource: z
           .string()
           .describe(
-            "Ресурс InvAPI без .php, например: iso, s3, rhr, eq, net, whmcs",
+            "InvAPI resource without .php, e.g.: iso, s3, rhr, eq, net, whmcs",
           ),
-        action: z.string().describe("Действие ресурса, например: list"),
+        action: z.string().describe("Resource action, e.g.: list"),
         params: z
           .record(z.any())
           .optional()
           .describe(
-            "Параметры вызова объектом; вложенные объекты превращаются в params[...]",
+            "Call parameters as an object; nested objects become params[...]",
           ),
         auth: z
           .boolean()
           .optional()
-          .describe("Подставлять сессионный токен (по умолчанию true)"),
+          .describe("Inject session token (defaults to true)"),
         confirm: z
           .boolean()
           .describe(
-            "Обязательное подтверждение. Без confirm=true вызов отклоняется.",
+            "Required confirmation. Without confirm=true the call is rejected.",
           ),
       },
       annotations: {
@@ -51,7 +51,7 @@ export function registerRawTool(server: McpServer, client: InvApiClient): void {
     async ({ resource, action, params = {}, auth, confirm }) => {
       if (confirm !== true) {
         return note(
-          "Вызов не выполнен: call_api_raw всегда требует confirm=true.",
+          "Call not executed: call_api_raw always requires confirm=true.",
         );
       }
       if (
@@ -59,8 +59,8 @@ export function registerRawTool(server: McpServer, client: InvApiClient): void {
         process.env.HOSTKEY_ALLOW_DESTRUCTIVE !== "1"
       ) {
         return note(
-          `Действие «${action}» выглядит деструктивным или платным и отклонено: ` +
-            "установите HOSTKEY_ALLOW_DESTRUCTIVE=1 в окружении MCP-сервера, чтобы разрешить такие вызовы.",
+          `Action "${action}" looks destructive or paid and was rejected: ` +
+            "set HOSTKEY_ALLOW_DESTRUCTIVE=1 in the MCP server environment to allow such calls.",
         );
       }
       try {
@@ -68,7 +68,7 @@ export function registerRawTool(server: McpServer, client: InvApiClient): void {
         const callback = (res as Record<string, unknown> | null)?.callback;
         const suffix =
           typeof callback === "string"
-            ? `\n\nОперация асинхронная. Callback-ключ: ${callback}. Отслеживайте статус инструментом check_task.`
+            ? `\n\nAsync operation. Callback key: ${callback}. Track with check_task.`
             : "";
         return ok(JSON.stringify(maskSecrets(res), null, 2) + suffix);
       } catch (e) {

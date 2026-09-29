@@ -12,25 +12,25 @@ export function registerServerTools(
     "get_servers",
     {
       description:
-        "Список серверов аккаунта Hostkey с фильтрами. Перед первым вызовом автоматически обновляет инвентарь (eq/update_servers). Возвращает ID серверов и краткие данные; для полной карточки используйте get_server.",
+        "List Hostkey account servers with filters. Before the first call, automatically refreshes inventory (eq/update_servers). Returns server IDs and brief data; use get_server for the full card.",
       inputSchema: {
         location: z
           .string()
           .optional()
           .describe(
-            "Коды локаций через запятую: NL,US,FI,DE,IS,TR,UK,ES,IT,PL,CH",
+            "Location codes, comma-separated: NL,US,FI,DE,IS,TR,UK,ES,IT,PL,CH",
           ),
         status: z
           .string()
           .optional()
-          .describe("Статус: rent (активный) или power_off (приостановлен)"),
-        ip: z.string().optional().describe("Найти сервер по IP-адресу"),
-        mac: z.string().optional().describe("Найти сервер по MAC-адресу"),
+          .describe("Status: rent (active) or power_off (suspended)"),
+        ip: z.string().optional().describe("Find server by IP address"),
+        mac: z.string().optional().describe("Find server by MAC address"),
         group: z
           .string()
           .optional()
           .describe(
-            "Группы через запятую: VPS,Gpu,1CPU,2CPU,AMD,Instances,Storage,Nodes,Micro,Mini,Dell",
+            "Groups, comma-separated: VPS,Gpu,1CPU,2CPU,AMD,Instances,Storage,Nodes,Micro,Mini,Dell",
           ),
       },
       annotations: { readOnlyHint: true, openWorldHint: true },
@@ -49,9 +49,9 @@ export function registerServerTools(
     "get_server",
     {
       description:
-        "Полная информация о сервере по его ID (eq/show): конфигурация, сеть, статус, расположение.",
+        "Full server details by ID (eq/show): configuration, network, status, location.",
       inputSchema: {
-        id: z.number().int().describe("ID сервера в InvAPI"),
+        id: z.number().int().describe("Server ID in InvAPI"),
       },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
@@ -68,8 +68,8 @@ export function registerServerTools(
   server.registerTool(
     "get_power_status",
     {
-      description: "Текущий статус питания сервера (включён/выключен).",
-      inputSchema: { id: z.number().int().describe("ID сервера") },
+      description: "Current server power status (on/off).",
+      inputSchema: { id: z.number().int().describe("Server ID") },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
     async ({ id }) => {
@@ -85,8 +85,8 @@ export function registerServerTools(
     "get_server_sensors",
     {
       description:
-        "Показания аппаратных сенсоров сервера (температуры, напряжения, вентиляторы). Только для bare-metal.",
-      inputSchema: { id: z.number().int().describe("ID сервера") },
+        "Hardware sensor readings (temperatures, voltages, fans). Bare-metal only.",
+      inputSchema: { id: z.number().int().describe("Server ID") },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
     async ({ id }) => {
@@ -102,8 +102,8 @@ export function registerServerTools(
     "get_server_tags",
     {
       description:
-        "Все теги сервера (tags/list). Теги хранят произвольные пары ключ-значение.",
-      inputSchema: { id: z.number().int().describe("ID сервера") },
+        "All server tags (tags/list). Tags store arbitrary key-value pairs.",
+      inputSchema: { id: z.number().int().describe("Server ID") },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
     async ({ id }) => {
@@ -119,8 +119,8 @@ export function registerServerTools(
     "search_servers_by_tag",
     {
       description:
-        "Поиск серверов по имени или значению тега (tags/user_search). Возвращает ID серверов.",
-      inputSchema: { value: z.string().describe("Шаблон поиска по тегам") },
+        "Search servers by tag name or value (tags/user_search). Returns server IDs.",
+      inputSchema: { value: z.string().describe("Tag search pattern") },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
     async ({ value }) => {

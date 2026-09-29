@@ -20,7 +20,7 @@ export class InvApiError extends Error {
   }
 }
 
-/** Hardcoded .com endpoint. Use hostkey-mcp-server-ru for .ru. */
+/** Hardcoded InvAPI endpoint (invapi.hostkey.com). */
 const INVAPI_BASE_URL = "https://invapi.hostkey.com";
 const DEFAULT_TOKEN_TTL = 3600;
 const DEFAULT_HTTP_TIMEOUT = 60;

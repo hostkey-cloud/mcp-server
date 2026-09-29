@@ -12,7 +12,7 @@ export function registerDnsTools(
     server,
     client,
     "list_dns_zones",
-    "Список всех DNS-зон аккаунта на серверах PowerDNS Hostkey (pdns/list_zones).",
+    "List all DNS zones on the account on Hostkey PowerDNS servers (pdns/list_zones).",
     "pdns",
     "list_zones",
   );
@@ -21,17 +21,17 @@ export function registerDnsTools(
     server,
     client,
     "get_dns_zone",
-    "Содержимое DNS-зоны: все записи (A, AAAA, CNAME, MX, TXT и т.д.) с авторитетного сервера (pdns/view_zone).",
+    "DNS zone contents: all records (A, AAAA, CNAME, MX, TXT, etc.) from the authoritative server (pdns/view_zone).",
     "pdns",
     "view_zone",
-    { zone: z.string().describe("Имя зоны, например example.com") },
+    { zone: z.string().describe("Zone name, e.g. example.com") },
   );
 
   registerRead(
     server,
     client,
     "list_dns_domains",
-    "Список всех доменов пользователя из таблицы доменов (pdns/list_domains).",
+    "List all user domains from the domains table (pdns/list_domains).",
     "pdns",
     "list_domains",
   );
@@ -40,32 +40,32 @@ export function registerDnsTools(
     server,
     client,
     "list_dns_subdomains",
-    "Список сабдоменов по ID сервера (pdns/list_subdomains).",
+    "List subdomains by server ID (pdns/list_subdomains).",
     "pdns",
     "list_subdomains",
-    { server_id: z.number().int().describe("ID сервера") },
+    { server_id: z.number().int().describe("Server ID") },
   );
 
   registerAction(
     server,
     client,
     "add_dns_domain",
-    "Создать DNS-зону и добавить домен в таблицу доменов (pdns/add_domain). Требует права pdns/edit.",
+    "Create a DNS zone and add a domain to the domains table (pdns/add_domain). Requires pdns/edit permission.",
     "pdns",
     "add_domain",
-    { name: z.string().describe("Имя домена, например example.com") },
+    { name: z.string().describe("Domain name, e.g. example.com") },
   );
 
   registerAction(
     server,
     client,
     "delete_dns_domain",
-    "Удалить домен по ID: DNS-зону, сам домен и все его сабдомены (pdns/delete_domain). ДЕСТРУКТИВНО. Требует права pdns/edit.",
+    "Delete a domain by ID: DNS zone, the domain itself, and all its subdomains (pdns/delete_domain). DESTRUCTIVE. Requires pdns/edit permission.",
     "pdns",
     "delete_domain",
     {
-      server_id: z.number().int().describe("ID сервера"),
-      domain_id: z.number().int().describe("ID домена из list_dns_domains"),
+      server_id: z.number().int().describe("Server ID"),
+      domain_id: z.number().int().describe("Domain ID from list_dns_domains"),
     },
     { destructive: true },
   );
@@ -74,13 +74,13 @@ export function registerDnsTools(
     server,
     client,
     "add_dns_subdomain",
-    "Добавить сабдомен в таблицу сабдоменов (pdns/add_subdomain). Требует права pdns/edit.",
+    "Add a subdomain to the subdomains table (pdns/add_subdomain). Requires pdns/edit permission.",
     "pdns",
     "add_subdomain",
     {
-      server_id: z.number().int().describe("ID сервера"),
-      domain_id: z.number().int().describe("ID домена из list_dns_domains"),
-      name: z.string().describe("Имя сабдомена"),
+      server_id: z.number().int().describe("Server ID"),
+      domain_id: z.number().int().describe("Domain ID from list_dns_domains"),
+      name: z.string().describe("Subdomain name"),
     },
   );
 
@@ -88,12 +88,12 @@ export function registerDnsTools(
     server,
     client,
     "edit_dns_subdomain",
-    "Обновить сабдомен (pdns/edit_subdomain). Требует права pdns/edit.",
+    "Update a subdomain (pdns/edit_subdomain). Requires pdns/edit permission.",
     "pdns",
     "edit_subdomain",
     {
-      id: z.number().int().describe("ID сабдомена"),
-      server_id: z.number().int().optional().describe("ID сервера"),
+      id: z.number().int().describe("Subdomain ID"),
+      server_id: z.number().int().optional().describe("Server ID"),
     },
   );
 
@@ -101,12 +101,12 @@ export function registerDnsTools(
     server,
     client,
     "delete_dns_subdomain",
-    "Удалить сабдомен из таблицы сабдоменов (pdns/delete_subdomain). ДЕСТРУКТИВНО. Требует права pdns/edit.",
+    "Delete a subdomain from the subdomains table (pdns/delete_subdomain). DESTRUCTIVE. Requires pdns/edit permission.",
     "pdns",
     "delete_subdomain",
     {
-      server_id: z.number().int().describe("ID сервера"),
-      id: z.number().int().describe("ID сабдомена"),
+      server_id: z.number().int().describe("Server ID"),
+      id: z.number().int().describe("Subdomain ID"),
     },
     { destructive: true },
   );
@@ -115,43 +115,43 @@ export function registerDnsTools(
     server,
     client,
     "add_dns_zone",
-    "Создать DNS-зону на авторитетном сервере PowerDNS (pdns/add_zone). Требует права pdns/edit.",
+    "Create a DNS zone on the authoritative PowerDNS server (pdns/add_zone). Requires pdns/edit permission.",
     "pdns",
     "add_zone",
     {
-      name: z.string().describe("Имя зоны, например example.com"),
+      name: z.string().describe("Zone name, e.g. example.com"),
       kind: z
         .enum(["Master", "Slave"])
         .optional()
-        .describe("Тип зоны, по умолчанию Master"),
+        .describe("Zone type, defaults to Master"),
       rrsets: z
         .boolean()
         .optional()
-        .describe("Использовать RRset вместо records (по умолчанию true)"),
+        .describe("Use RRset instead of records (defaults to true)"),
       dnssec: z
         .boolean()
         .optional()
-        .describe("Включить DNSSEC (по умолчанию false)"),
+        .describe("Enable DNSSEC (defaults to false)"),
       masters: z
         .array(z.string())
         .optional()
-        .describe("Список master-серверов (для Slave)"),
+        .describe("List of master servers (for Slave)"),
       dns: z
         .object({
           ttl: z.number().int().optional(),
           mname: z
             .string()
             .optional()
-            .describe("Primary NS, например ns1.hostkey.com"),
+            .describe("Primary NS, e.g. ns1.hostkey.com"),
           rname: z
             .string()
             .optional()
-            .describe("Email администратора, например admin.example.com"),
+            .describe("Admin email, e.g. admin.example.com"),
           serial: z
             .number()
             .int()
             .optional()
-            .describe("Сериал зоны, рекомендуется YYYYMMDD00"),
+            .describe("Zone serial, recommended YYYYMMDD00"),
           refresh: z.number().int().optional(),
           retry: z.number().int().optional(),
           expire: z.number().int().optional(),
@@ -159,13 +159,13 @@ export function registerDnsTools(
         })
         .optional()
         .describe(
-          "SOA-параметры зоны; при пропуске применяются дефолты Hostkey",
+          "SOA parameters for the zone; Hostkey defaults apply if omitted",
         ),
       nameservers: z
         .array(z.string())
         .optional()
         .describe(
-          "NS-серверы зоны, по умолчанию ns1.hostkey.com/ns2.hostkey.com",
+          "NS servers for the zone, defaults to ns1.hostkey.com/ns2.hostkey.com",
         ),
     },
   );
@@ -174,10 +174,10 @@ export function registerDnsTools(
     server,
     client,
     "delete_dns_zone",
-    "Удалить DNS-зону по имени вместе со всеми записями и метаданными (pdns/delete_zone). ДЕСТРУКТИВНО. Требует права pdns/edit.",
+    "Delete a DNS zone by name along with all records and metadata (pdns/delete_zone). DESTRUCTIVE. Requires pdns/edit permission.",
     "pdns",
     "delete_zone",
-    { zone: z.string().describe("Имя зоны") },
+    { zone: z.string().describe("Zone name") },
     { destructive: true },
   );
 
@@ -185,38 +185,38 @@ export function registerDnsTools(
     server,
     client,
     "add_dns_record",
-    "Добавить или изменить DNS-запись в зоне (pdns/add_dns). Требует права pdns/edit. " +
-      "Для SRV-записей заполните proto/priority/weight/port/target. Поля mname/rname в документации отмечены как обязательные для SOA-проверок — при ошибке заполните их.",
+    "Add or update a DNS record in a zone (pdns/add_dns). Requires pdns/edit permission. " +
+      "For SRV records, fill in proto/priority/weight/port/target. Fields mname/rname are marked required for SOA checks in the docs — fill them in on error.",
     "pdns",
     "add_dns",
     {
-      zone: z.string().describe("Имя зоны"),
-      name: z.string().optional().describe("Имя записи, например www"),
-      type: z.string().describe("Тип записи: A, AAAA, CNAME, MX, TXT, SRV…"),
-      content: z.string().describe("Значение записи, например 10.56.121.5"),
+      zone: z.string().describe("Zone name"),
+      name: z.string().optional().describe("Record name, e.g. www"),
+      type: z.string().describe("Record type: A, AAAA, CNAME, MX, TXT, SRV…"),
+      content: z.string().describe("Record value, e.g. 10.56.121.5"),
       ttl: z
         .number()
         .int()
         .optional()
-        .describe("TTL в секундах, по умолчанию 3600"),
+        .describe("TTL in seconds, defaults to 3600"),
       old_name: z
         .string()
         .optional()
-        .describe("Прежнее имя записи — для переименования"),
+        .describe("Previous record name — for renaming"),
       increase_soa_serial: z
         .boolean()
         .optional()
-        .describe("Автоинкремент SOA-сериала (по умолчанию true)"),
-      mname: z.string().optional().describe("Primary NS в SOA-записи"),
+        .describe("Auto-increment SOA serial (defaults to true)"),
+      mname: z.string().optional().describe("Primary NS in the SOA record"),
       rname: z
         .string()
         .optional()
-        .describe("Email администратора в SOA-записи"),
-      proto: z.string().optional().describe("Протокол для SRV, например tcp"),
-      priority: z.number().int().optional().describe("Приоритет для SRV/MX"),
-      weight: z.number().int().optional().describe("Вес для SRV"),
-      port: z.number().int().optional().describe("Порт для SRV"),
-      target: z.string().optional().describe("Целевой домен для SRV"),
+        .describe("Admin email in the SOA record"),
+      proto: z.string().optional().describe("Protocol for SRV, e.g. tcp"),
+      priority: z.number().int().optional().describe("Priority for SRV/MX"),
+      weight: z.number().int().optional().describe("Weight for SRV"),
+      port: z.number().int().optional().describe("Port for SRV"),
+      target: z.string().optional().describe("Target domain for SRV"),
     },
     {
       map: ({ increase_soa_serial, ...rest }) => ({
@@ -232,13 +232,13 @@ export function registerDnsTools(
     server,
     client,
     "delete_dns_record",
-    "Удалить DNS-запись из зоны (pdns/delete_dns). ДЕСТРУКТИВНО. Требует права pdns/edit.",
+    "Delete a DNS record from a zone (pdns/delete_dns). DESTRUCTIVE. Requires pdns/edit permission.",
     "pdns",
     "delete_dns",
     {
-      zone: z.string().describe("Имя зоны"),
-      name: z.string().describe("Имя записи"),
-      type: z.string().describe("Тип записи"),
+      zone: z.string().describe("Zone name"),
+      name: z.string().describe("Record name"),
+      type: z.string().describe("Record type"),
     },
     { destructive: true },
   );

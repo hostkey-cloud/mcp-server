@@ -12,7 +12,7 @@ export function registerBillingTools(
     server,
     client,
     "get_billing_client",
-    "Данные клиента из биллинга (whmcs/get_client): контакты, валюта, статус аккаунта.",
+    "Client data from billing (whmcs/get_client): contacts, currency, account status.",
     "whmcs",
     "get_client",
   );
@@ -21,7 +21,7 @@ export function registerBillingTools(
     server,
     client,
     "get_invoices",
-    "Полный список инвойсов аккаунта (whmcs/get_invoices).",
+    "Full list of account invoices (whmcs/get_invoices).",
     "whmcs",
     "get_invoices",
   );
@@ -30,46 +30,46 @@ export function registerBillingTools(
     server,
     client,
     "get_invoice",
-    "Данные конкретного инвойса для оплаты (whmcs/get_invoice).",
+    "Data for a specific invoice for payment (whmcs/get_invoice).",
     "whmcs",
     "get_invoice",
-    { invoice_id: z.number().int().describe("Номер инвойса") },
+    { invoice_id: z.number().int().describe("Invoice number") },
   );
 
   registerRead(
     server,
     client,
     "get_server_invoices",
-    "Инвойсы, относящиеся к конкретному серверу (whmcs/get_related_invoices).",
+    "Invoices related to a specific server (whmcs/get_related_invoices).",
     "whmcs",
     "get_related_invoices",
-    { id: z.number().int().describe("ID сервера") },
+    { id: z.number().int().describe("Server ID") },
   );
 
   registerRead(
     server,
     client,
     "get_server_billing_data",
-    "Платёжная информация по аренде сервера (whmcs/get_billing_data).",
+    "Billing information for a server rental (whmcs/get_billing_data).",
     "whmcs",
     "get_billing_data",
-    { id: z.number().int().describe("ID сервера") },
+    { id: z.number().int().describe("Server ID") },
   );
 
   registerRead(
     server,
     client,
     "get_transactions",
-    "Список транзакций по аккаунту клиента (whmcs/transactions).",
+    "List of transactions for the client account (whmcs/transactions).",
     "whmcs",
     "transactions",
     {
-      invoice_id: z.number().int().optional().describe("Фильтр по инвойсу"),
+      invoice_id: z.number().int().optional().describe("Filter by invoice"),
       transaction_id: z
         .number()
         .int()
         .optional()
-        .describe("Конкретная транзакция"),
+        .describe("Specific transaction"),
     },
   );
 
@@ -77,47 +77,47 @@ export function registerBillingTools(
     server,
     client,
     "get_credit_history",
-    "Движение средств по лицевому счёту: начисления и списания кредитов (whmcs/getcredits).",
+    "Credit balance movement: credit additions and deductions (whmcs/getcredits).",
     "whmcs",
     "getcredits",
-    { id: z.number().int().describe("ID сервера") },
+    { id: z.number().int().describe("Server ID") },
   );
 
   registerRead(
     server,
     client,
     "get_payment_gateway",
-    "Способы оплаты конкретного инвойса (whmcs/getpaymentgw).",
+    "Payment methods for a specific invoice (whmcs/getpaymentgw).",
     "whmcs",
     "getpaymentgw",
-    { invoice_id: z.number().int().describe("Номер инвойса") },
+    { invoice_id: z.number().int().describe("Invoice number") },
   );
 
   registerRead(
     server,
     client,
     "download_invoice",
-    "Скачать инвойс в PDF (whmcs/download_invoice). Ответ обычно содержит PDF в Base64 — сохраните и декодируйте при необходимости.",
+    "Download an invoice as PDF (whmcs/download_invoice). Response usually contains PDF in Base64 — save and decode as needed.",
     "whmcs",
     "download_invoice",
-    { invoice_id: z.number().int().describe("Номер инвойса") },
+    { invoice_id: z.number().int().describe("Invoice number") },
   );
 
   registerRead(
     server,
     client,
     "get_cancellation_requests",
-    "Список активных заявок на отмену услуг (whmcs/get_cancellation_requests).",
+    "List of active service cancellation requests (whmcs/get_cancellation_requests).",
     "whmcs",
     "get_cancellation_requests",
-    { id: z.number().int().optional().describe("ID сервера (фильтр)") },
+    { id: z.number().int().optional().describe("Server ID (filter)") },
   );
 
   registerRead(
     server,
     client,
     "get_contacts",
-    "Список дополнительных контактов аккаунта (whmcs/get_contacts).",
+    "List of additional account contacts (whmcs/get_contacts).",
     "whmcs",
     "get_contacts",
   );
@@ -126,7 +126,7 @@ export function registerBillingTools(
     server,
     client,
     "update_billing_client",
-    "Изменить данные клиента в биллинге (whmcs/update_client): ФИО, компания, адрес, email, телефон и т.д.",
+    "Update client data in billing (whmcs/update_client): name, company, address, email, phone, etc.",
     "whmcs",
     "update_client",
     {
@@ -148,17 +148,17 @@ export function registerBillingTools(
     server,
     client,
     "reset_billing_password",
-    "Сбросить пароль аккаунта биллинга (whmcs/reset_password): на указанный email придёт ссылка для сброса. Email должен совпадать с email аккаунта.",
+    "Reset the billing account password (whmcs/reset_password): a reset link is sent to the given email. Email must match the account email.",
     "whmcs",
     "reset_password",
-    { email: z.string().describe("Email аккаунта") },
+    { email: z.string().describe("Account email") },
   );
 
   registerAction(
     server,
     client,
     "add_contact",
-    "Добавить дополнительный контакт в аккаунт (whmcs/add_contact). ВНИМАНИЕ: контакт создаётся со случайным email — его нужно поменять в Invapi.",
+    "Add an additional contact to the account (whmcs/add_contact). WARNING: the contact is created with a random email — change it in Invapi.",
     "whmcs",
     "add_contact",
   );
@@ -167,17 +167,17 @@ export function registerBillingTools(
     server,
     client,
     "update_contact",
-    "Изменить дополнительный контакт (whmcs/update_contact): email, пароль, телефон. Указание телефона включает 2FA по SMS.",
+    "Update an additional contact (whmcs/update_contact): email, password, phone. Providing a phone enables SMS 2FA.",
     "whmcs",
     "update_contact",
     {
-      contact_id: z.number().int().describe("ID контакта"),
-      email: z.string().describe("Email контакта"),
-      password2: z.string().optional().describe("Новый пароль контакта"),
+      contact_id: z.number().int().describe("Contact ID"),
+      email: z.string().describe("Contact email"),
+      password2: z.string().optional().describe("New contact password"),
       phonenumber: z
         .string()
         .optional()
-        .describe("Телефон (включает 2FA по SMS)"),
+        .describe("Phone (enables SMS 2FA)"),
     },
   );
 
@@ -185,10 +185,10 @@ export function registerBillingTools(
     server,
     client,
     "delete_contact",
-    "Удалить дополнительный контакт аккаунта (whmcs/delete_contact). ДЕСТРУКТИВНО.",
+    "Delete an additional account contact (whmcs/delete_contact). DESTRUCTIVE.",
     "whmcs",
     "delete_contact",
-    { contact_id: z.number().int().describe("ID контакта") },
+    { contact_id: z.number().int().describe("Contact ID") },
     { destructive: true },
   );
 
@@ -196,32 +196,32 @@ export function registerBillingTools(
     server,
     client,
     "generate_due_invoice",
-    "Создать следующий инвойс для сервера (whmcs/generate_due_invoice).",
+    "Create the next invoice for a server (whmcs/generate_due_invoice).",
     "whmcs",
     "generate_due_invoice",
-    { id: z.number().int().describe("ID сервера") },
+    { id: z.number().int().describe("Server ID") },
   );
 
   registerAction(
     server,
     client,
     "create_addfunds_invoice",
-    "Создать инвойс на пополнение кредитного баланса (whmcs/create_addfunds). ДЕНЬГИ: создаёт реальный инвойс на указанную сумму.",
+    "Create an invoice to top up the credit balance (whmcs/create_addfunds). MONEY: creates a real invoice for the given amount.",
     "whmcs",
     "create_addfunds",
-    { amount: z.number().describe("Сумма пополнения в валюте аккаунта") },
+    { amount: z.number().describe("Top-up amount in account currency") },
   );
 
   registerAction(
     server,
     client,
     "apply_credit",
-    "Оплатить инвойс полностью или частично с кредитного баланса (whmcs/apply_credit). ДЕНЬГИ: списывает средства со счёта.",
+    "Pay an invoice in full or in part from the credit balance (whmcs/apply_credit). MONEY: deducts funds from the account.",
     "whmcs",
     "apply_credit",
     {
-      invoice_id: z.number().int().describe("Номер инвойса"),
-      amount: z.number().describe("Сумма оплаты в валюте аккаунта"),
+      invoice_id: z.number().int().describe("Invoice number"),
+      amount: z.number().describe("Payment amount in account currency"),
     },
   );
 
@@ -229,27 +229,27 @@ export function registerBillingTools(
     server,
     client,
     "mass_pay",
-    "Создать групповой инвойс для оплаты нескольких инвойсов разом (whmcs/mass_pay). ДЕНЬГИ.",
+    "Create a group invoice to pay multiple invoices at once (whmcs/mass_pay). MONEY.",
     "whmcs",
     "mass_pay",
-    { invoices: z.array(z.number().int()).describe("Массив номеров инвойсов") },
+    { invoices: z.array(z.number().int()).describe("Array of invoice numbers") },
   );
 
   registerAction(
     server,
     client,
     "request_cancellation",
-    "Запросить отмену услуги (whmcs/request_cancellation). ДЕСТРУКТИВНО: cancellation_type=1 — немедленная отмена с частичным возвратом (если возможно), 0 — отмена в конце биллинг-периода. Требует HOSTKEY_ALLOW_DESTRUCTIVE=1.",
+    "Request service cancellation (whmcs/request_cancellation). DESTRUCTIVE: cancellation_type=1 — immediate cancel with partial refund (if possible), 0 — cancel at end of billing period. Requires HOSTKEY_ALLOW_DESTRUCTIVE=1.",
     "whmcs",
     "request_cancellation",
     {
-      id: z.number().int().describe("ID сервера"),
+      id: z.number().int().describe("Server ID"),
       cancellation_type: z
         .union([z.literal(0), z.literal(1)])
         .describe(
-          "1 — немедленно (частичный возврат при возможности), 0 — в конце биллинг-периода",
+          "1 — immediate (partial refund if possible), 0 — at end of billing period",
         ),
-      terminate_reason_custom: z.string().optional().describe("Причина отмены"),
+      terminate_reason_custom: z.string().optional().describe("Cancellation reason"),
     },
     { destructive: true, envGuard: true },
   );
@@ -258,9 +258,9 @@ export function registerBillingTools(
     server,
     client,
     "delete_cancellation_request",
-    "Отозвать заявку на отмену услуги (whmcs/delete_cancellation_request).",
+    "Withdraw a service cancellation request (whmcs/delete_cancellation_request).",
     "whmcs",
     "delete_cancellation_request",
-    { id: z.number().int().describe("ID сервера") },
+    { id: z.number().int().describe("Server ID") },
   );
 }

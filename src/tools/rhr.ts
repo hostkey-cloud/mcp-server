@@ -12,15 +12,15 @@ export function registerRhrTools(
     server,
     client,
     "list_rhr_requests",
-    "Список заявок на удалённые работы с фильтрацией по локации и статусу (rhr/list).",
+    "List Remote Hands requests with filtering by location and status (rhr/list).",
     "rhr",
     "list",
     {
       location: z
         .string()
         .optional()
-        .describe("Фильтр по локации, например NL"),
-      status: z.string().optional().describe("Фильтр по статусу заявки"),
+        .describe("Filter by location, e.g. NL"),
+      status: z.string().optional().describe("Filter by request status"),
     },
   );
 
@@ -28,17 +28,17 @@ export function registerRhrTools(
     server,
     client,
     "create_rhr_request",
-    "Создать заявку на удалённые работы (rhr/add): работы дежурной смены в дата-центре, которые нельзя выполнить удалённо. " +
-      "Опишите работы максимально подробно в comment. Использовать, только если модуль удалённого управления сервером недоступен/не работает.",
+    "Create a Remote Hands request (rhr/add): on-site datacenter shift work that cannot be done remotely. " +
+      "Describe the work in as much detail as possible in comment. Use only if the remote server management module is unavailable/not working.",
     "rhr",
     "add",
     {
-      id: z.number().int().describe("ID сервера"),
-      comment: z.string().describe("Подробное описание требуемых работ"),
+      id: z.number().int().describe("Server ID"),
+      comment: z.string().describe("Detailed description of the required work"),
       request_type: z
         .string()
         .optional()
-        .describe("Тип работ, если задаётся справочником"),
+        .describe("Work type, if set by a directory"),
     },
   );
 
@@ -46,12 +46,12 @@ export function registerRhrTools(
     server,
     client,
     "add_rhr_comment",
-    "Добавить видимое клиенту сообщение в историю заявки (rhr/chat).",
+    "Add a client-visible message to the request history (rhr/chat).",
     "rhr",
     "chat",
     {
-      id: z.number().int().describe("ID заявки из list_rhr_requests"),
-      message: z.string().describe("Текст сообщения"),
+      id: z.number().int().describe("Request ID from list_rhr_requests"),
+      message: z.string().describe("Message text"),
     },
   );
 
@@ -59,10 +59,10 @@ export function registerRhrTools(
     server,
     client,
     "discard_rhr_request",
-    "Отменить/закрыть заявку на удалённые работы (rhr/discard). ДЕСТРУКТИВНО: заявка будет отменена.",
+    "Cancel/close a Remote Hands request (rhr/discard). DESTRUCTIVE: the request will be cancelled.",
     "rhr",
     "discard",
-    { id: z.number().int().describe("ID заявки") },
+    { id: z.number().int().describe("Request ID") },
     { destructive: true },
   );
 }

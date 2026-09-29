@@ -12,16 +12,16 @@ export function registerTaskTools(
     "check_task",
     {
       description:
-        "Проверка статуса асинхронной операции по callback-ключу (eq_callback/check). " +
-        "Многие операции InvAPI (вкл/выкл питания, заказ, переустановка, снапшоты) возвращают {" +
-        '"result":"OK","callback":"<ключ>"' +
-        "}. Передайте этот ключ сюда, чтобы узнать статус: " +
-        'result="Not ready" — операция ещё идёт; result="OK" — завершена успешно (после этого ключ сгорает). ' +
-        "Деплой сервера может занимать 10–30 минут.",
+        "Check async job status by callback key (eq_callback/check). " +
+        "Many InvAPI operations (power on/off, order, reinstall, snapshots) return {" +
+        '"result":"OK","callback":"<key>"' +
+        "}. Pass that key here: " +
+        'result="Not ready" — still running; result="OK" — finished (key then expires). ' +
+        "Server deploy can take 10–30 minutes.",
       inputSchema: {
         key: z
           .string()
-          .describe("Callback-ключ из ответа асинхронной операции"),
+          .describe("Callback key from an async operation response"),
       },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

@@ -3,7 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { InvApiClient } from "../client.js";
 import { registerAction } from "./helpers.js";
 
-const idField = { id: z.number().int().describe("ID сервера") };
+const idField = { id: z.number().int().describe("Server ID") };
 
 /**
  * PXE OS reinstall (Foreman) when reinstall_server is not enough.
@@ -19,7 +19,7 @@ export function registerPxeTools(
     server,
     client,
     "create_reinstall_task",
-    "Шаг 1 PXE-переустановки: создать мастер-ключ переустановки ОС (eq/reinstall). Возвращает reinstall_key, по которому check_task отслеживает стадии установки. ДЕСТРУКТИВНО: часть процесса, затирающего диски сервера.",
+    "PXE reinstall step 1: create an OS reinstall master key (eq/reinstall). Returns reinstall_key used by check_task to track install stages. DESTRUCTIVE: part of the process that wipes server disks.",
     "eq",
     "reinstall",
     idField,
@@ -30,30 +30,30 @@ export function registerPxeTools(
     server,
     client,
     "create_pxe_config",
-    "Шаг 2 PXE-переустановки: создать PXE-конфиг для установки ОС (eq/create_pxe). ДЕСТРУКТИВНО.",
+    "PXE reinstall step 2: create a PXE config for OS install (eq/create_pxe). DESTRUCTIVE.",
     "eq",
     "create_pxe",
     {
       ...idField,
-      os_id: z.number().int().describe("ID ОС из list_os"),
+      os_id: z.number().int().describe("OS ID from list_os"),
       root_pass: z
         .string()
         .min(8)
-        .describe("Пароль root (мин. 8 символов, заглавная буква, цифра)"),
-      hostname: z.string().describe("Имя хоста"),
-      ssh_key: z.string().optional().describe("Публичный SSH-ключ"),
+        .describe("Root password (min. 8 chars, uppercase letter, digit)"),
+      hostname: z.string().describe("Hostname"),
+      ssh_key: z.string().optional().describe("Public SSH key"),
       post_install_callback: z
         .string()
         .optional()
-        .describe("URL callback после установки"),
+        .describe("Callback URL after install"),
       post_install_script: z
         .string()
         .optional()
-        .describe("Скрипт после установки"),
+        .describe("Post-install script"),
       reinstall_key: z
         .string()
         .optional()
-        .describe("Мастер-ключ из create_reinstall_task"),
+        .describe("Master key from create_reinstall_task"),
     },
     { destructive: true, envGuard: true },
   );
@@ -62,12 +62,12 @@ export function registerPxeTools(
     server,
     client,
     "set_boot_device",
-    "Установить порядок загрузки сервера (eq/boot_dev): pxe — сетевая загрузка (шаг 3 переустановки), disk — загрузка с диска (шаг 6), cd — смонтированный ISO.",
+    "Set server boot order (eq/boot_dev): pxe — network boot (reinstall step 3), disk — boot from disk (step 6), cd — mounted ISO.",
     "eq",
     "boot_dev",
     {
       ...idField,
-      media: z.enum(["pxe", "disk", "cd"]).describe("Устройство загрузки"),
+      media: z.enum(["pxe", "disk", "cd"]).describe("Boot device"),
     },
     { destructive: true, envGuard: true },
   );
@@ -76,10 +76,10 @@ export function registerPxeTools(
     server,
     client,
     "clear_pxe_config",
-    "Шаг 7 PXE-переустановки: удалить PXE-конфиг (eq/clear_pxe). ОБЯЗАТЕЛЬНО после завершения — иначе возможна внезапная переустановка при следующей перезагрузке.",
+    "PXE reinstall step 7: remove the PXE config (eq/clear_pxe). REQUIRED after completion — otherwise an unexpected reinstall may occur on the next reboot.",
     "eq",
     "clear_pxe",
-    { ...idField, hostname: z.string().describe("Имя хоста сервера") },
+    { ...idField, hostname: z.string().describe("Server hostname") },
     { destructive: true, envGuard: true },
   );
 }

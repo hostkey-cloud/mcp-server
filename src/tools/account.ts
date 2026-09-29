@@ -12,7 +12,7 @@ export function registerAccountTools(
     server,
     client,
     "get_account_info",
-    "Информация о текущем API-токене и аккаунте (auth/info): доступные вызовы, тип и роль аккаунта, ID привязанных серверов. Полезно для проверки подключения.",
+    "Current API token and account info (auth/info): available calls, account type and role, linked server IDs. Useful to verify the connection.",
     "auth",
     "info",
   );
@@ -21,7 +21,7 @@ export function registerAccountTools(
     "logout",
     {
       description:
-        "Завершить текущую API-сессию (auth/logout): сессионный токен удаляется из InvAPI. При следующем вызове клиент автоматически выполнит повторный вход по API-ключу.",
+        "End the current API session (auth/logout): session token is removed from InvAPI. On the next call the client will sign in again with the API key.",
       inputSchema: {},
       annotations: {
         readOnlyHint: false,
@@ -43,7 +43,7 @@ export function registerAccountTools(
     server,
     client,
     "list_api_keys",
-    "Список всех API-ключей аккаунта (api_keys/list).",
+    "List all account API keys (api_keys/list).",
     "api_keys",
     "list",
   );
@@ -52,10 +52,10 @@ export function registerAccountTools(
     server,
     client,
     "list_server_api_keys",
-    "Список API-ключей, выданных для конкретного сервера (api_keys/list_for_server).",
+    "List API keys issued for a specific server (api_keys/list_for_server).",
     "api_keys",
     "list_for_server",
-    { server_id: z.number().int().describe("ID сервера") },
+    { server_id: z.number().int().describe("Server ID") },
     { map: ({ server_id }) => ({ params: { server_id } }) },
   );
 
@@ -63,10 +63,10 @@ export function registerAccountTools(
     server,
     client,
     "get_api_key",
-    "Информация о конкретном API-ключе (api_keys/view).",
+    "Details for a specific API key (api_keys/view).",
     "api_keys",
     "view",
-    { id: z.number().int().describe("ID ключа из list_api_keys") },
+    { id: z.number().int().describe("Key ID from list_api_keys") },
     { map: ({ id }) => ({ params: { id } }) },
   );
 
@@ -74,13 +74,13 @@ export function registerAccountTools(
     server,
     client,
     "get_api_key_history",
-    "История использования API-ключа за период (api_keys/history).",
+    "API key usage history for a period (api_keys/history).",
     "api_keys",
     "history",
     {
-      id: z.number().int().describe("ID ключа"),
-      period_from: z.string().optional().describe("Начало периода, YYYY-MM-DD"),
-      period_to: z.string().optional().describe("Конец периода, YYYY-MM-DD"),
+      id: z.number().int().describe("Key ID"),
+      period_from: z.string().optional().describe("Period start, YYYY-MM-DD"),
+      period_to: z.string().optional().describe("Period end, YYYY-MM-DD"),
     },
     { map: (args) => ({ params: args }) },
   );
@@ -89,30 +89,30 @@ export function registerAccountTools(
     server,
     client,
     "create_api_key",
-    "Создать новый API-ключ для аккаунта или конкретного сервера (api_keys/add). Значение ключа будет показано один раз в ответе — сохраните его.",
+    "Create a new API key for the account or a specific server (api_keys/add). The key value is shown once in the response — save it.",
     "api_keys",
     "add",
     {
-      name: z.string().describe("Имя ключа"),
+      name: z.string().describe("Key name"),
       server_id: z
         .number()
         .int()
         .optional()
-        .describe("ID сервера; если не указан — ключ на весь аккаунт"),
+        .describe("Server ID; omit for an account-wide key"),
       ip: z
         .string()
         .optional()
-        .describe("Белый список IP, например 10.0.0.2, 10.4.6.3/24"),
+        .describe("IP allowlist, e.g. 10.0.0.2, 10.4.6.3/24"),
       login_notify_method: z
         .enum(["none", "email", "webhook"])
         .describe(
-          "Уведомления о входах по ключу; для per-server ключа используйте none",
+          "Login notifications for this key; use none for per-server keys",
         ),
       login_notify_address: z
         .string()
         .optional()
-        .describe("Email или webhook URL для уведомлений"),
-      active: z.boolean().describe("true — ключ активен"),
+        .describe("Email or webhook URL for notifications"),
+      active: z.boolean().describe("true — key is active"),
     },
     {
       map: ({ active, ...rest }) => ({
@@ -125,18 +125,18 @@ export function registerAccountTools(
     server,
     client,
     "update_api_key",
-    "Изменить параметры API-ключа (api_keys/edit): имя, IP-белый список, уведомления, активность.",
+    "Update API key settings (api_keys/edit): name, IP allowlist, notifications, active flag.",
     "api_keys",
     "edit",
     {
-      id: z.number().int().describe("ID ключа"),
-      name: z.string().describe("Имя ключа"),
-      ip: z.string().optional().describe("Белый список IP"),
+      id: z.number().int().describe("Key ID"),
+      name: z.string().describe("Key name"),
+      ip: z.string().optional().describe("IP allowlist"),
       login_notify_method: z
         .enum(["none", "email", "webhook"])
-        .describe("Способ уведомлений о входах"),
+        .describe("Login notification method"),
       login_notify_address: z.string().optional(),
-      active: z.boolean().describe("true — ключ активен"),
+      active: z.boolean().describe("true — key is active"),
     },
     {
       map: ({ active, ...rest }) => ({
@@ -149,10 +149,10 @@ export function registerAccountTools(
     server,
     client,
     "delete_api_key",
-    "Удалить API-ключ (api_keys/delete). ДЕСТРУКТИВНО: приложения, использующие ключ, потеряют доступ.",
+    "Delete an API key (api_keys/delete). DESTRUCTIVE: apps using the key will lose access.",
     "api_keys",
     "delete",
-    { id: z.number().int().describe("ID ключа") },
+    { id: z.number().int().describe("Key ID") },
     { destructive: true, map: ({ id }) => ({ params: { id } }) },
   );
 }

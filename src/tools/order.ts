@@ -20,71 +20,71 @@ export function registerOrderTools(
     "order_server",
     {
       description:
-        "Заказ instant- или stock-сервера (eq/order_instance). ВАЖНО: заказ списывает средства с кредитного баланса " +
-        "или выставляет инвойс. По умолчанию работает в режиме dry_run=true — только проверяет доступность пресета и ОС " +
-        "и возвращает сводку без создания заказа. Для реального заказа передайте dry_run=false и confirm=true " +
-        "после явного согласия пользователя на стоимость. Деплой занимает 10–30 минут, статус — через check_task.",
+        "Order an instant or stock server (eq/order_instance). IMPORTANT: ordering charges the credit balance " +
+        "or creates an invoice. Defaults to dry_run=true — only checks preset/OS availability " +
+        "and returns a summary without placing an order. For a real order pass dry_run=false and confirm=true " +
+        "after explicit user consent on the cost. Deploy takes 10–30 minutes; status via check_task.",
       inputSchema: {
         preset: z
           .string()
           .describe(
-            "ID или имя пресета из list_presets (например, 108 или vm.pico)",
+            "Preset ID or name from list_presets (e.g. 108 or vm.pico)",
           ),
         location_name: z
           .string()
-          .describe("Локация: NL/US/FI/DE/IS/TR/UK/ES/IT/PL/CH"),
-        os_id: z.number().int().describe("ID ОС из list_os"),
+          .describe("Location: NL/US/FI/DE/IS/TR/UK/ES/IT/PL/CH"),
+        os_id: z.number().int().describe("OS ID from list_os"),
         traffic_plan: z
           .number()
           .int()
-          .describe("ID трафик-плана из list_traffic_plans"),
+          .describe("Traffic plan ID from list_traffic_plans"),
         root_pass: z
           .string()
           .min(8)
           .describe(
-            "Пароль root: мин. 8 символов, заглавная буква, цифра, спецсимвол (кроме @ и #)",
+            "Root password: min. 8 chars, uppercase, digit, special char (not @ or #)",
           ),
-        deploy_period: z.enum(deployPeriods).describe("Период оплаты"),
+        deploy_period: z.enum(deployPeriods).describe("Billing period"),
         soft_id: z
           .number()
           .int()
           .optional()
-          .describe("ID ПО из list_software (опционально)"),
+          .describe("Software ID from list_software (optional)"),
         hostname: z
           .string()
           .optional()
-          .describe("Имя хоста; по умолчанию генерируется из локации и ID"),
-        ssh_key: z.string().optional().describe("Публичный SSH-ключ для root"),
+          .describe("Hostname; default is generated from location and ID"),
+        ssh_key: z.string().optional().describe("Public SSH key for root"),
         deploy_notify: z
           .boolean()
           .optional()
           .describe(
-            "Уведомление о завершении деплоя на email (рекомендуется true)",
+            "Email notification when deploy finishes (recommended true)",
           ),
         post_install_script: z
           .string()
           .optional()
-          .describe("Скрипт, выполняемый после деплоя"),
+          .describe("Script run after deploy"),
         post_install_callback: z
           .string()
           .optional()
-          .describe("URL callback после деплоя"),
+          .describe("Callback URL after deploy"),
         own_os: z
           .number()
           .int()
           .optional()
-          .describe("1 — не устанавливать ОС (ручная установка)"),
-        promocode: z.string().optional().describe("Промокод на скидку"),
+          .describe("1 — do not install OS (manual install)"),
+        promocode: z.string().optional().describe("Discount promocode"),
         dry_run: z
           .boolean()
           .optional()
           .describe(
-            "По умолчанию true: проверка параметров без создания заказа и списания средств",
+            "Default true: validate parameters without placing an order or charging",
           ),
         confirm: z
           .boolean()
           .optional()
-          .describe("Обязателен (=true) для реального заказа"),
+          .describe("Required (=true) for a real order"),
       },
       annotations: {
         readOnlyHint: false,
@@ -121,12 +121,12 @@ export function registerOrderTools(
           )) as unknown;
           checks.os_lookup = osList;
           return ok(
-            "DRY-RUN: заказ НЕ создан, средства не списаны.\n\n" +
-              `Параметры: preset=${preset}, location=${location_name}, os_id=${os_id}, ` +
+            "DRY-RUN: order NOT created, no charge applied.\n\n" +
+              `Parameters: preset=${preset}, location=${location_name}, os_id=${os_id}, ` +
               `traffic_plan=${args.traffic_plan}, period=${args.deploy_period}.\n` +
-              "Результаты проверки доступности:\n" +
+              "Availability check results:\n" +
               JSON.stringify(maskSecrets(checks), null, 2) +
-              "\n\nЕсли всё корректно и пользователь согласен на стоимость — повторите вызов с dry_run=false и confirm=true.",
+              "\n\nIf everything looks correct and the user agrees on the cost — call again with dry_run=false and confirm=true.",
           );
         } catch (e) {
           return fail(e);
@@ -135,8 +135,8 @@ export function registerOrderTools(
 
       if (!confirm) {
         return note(
-          "Заказ не создан: для реального заказа требуется confirm=true после явного согласия пользователя на стоимость. " +
-            "Рекомендуется сначала выполнить вызов с dry_run=true.",
+          "Order not created: a real order requires confirm=true after explicit user consent on the cost. " +
+            "Prefer running with dry_run=true first.",
         );
       }
 
@@ -151,7 +151,7 @@ export function registerOrderTools(
         return ok(
           JSON.stringify(maskSecrets(res), null, 2) +
             (typeof callback === "string"
-              ? `\n\nЗаказ создан. Callback-ключ деплоя: ${callback}. Деплой занимает 10–30 минут; проверяйте статус инструментом check_task.`
+              ? `\n\nOrder created. Deploy callback: ${callback}. Deploy takes 10–30 minutes; track with check_task.`
               : ""),
         );
       } catch (e) {
@@ -164,29 +164,29 @@ export function registerOrderTools(
     "reinstall_server",
     {
       description:
-        "Переустановка ОС на существующем сервере (упрощённый путь через eq/order_instance с id). " +
-        "ДЕСТРУКТИВНО: все данные на дисках будут удалены. Требуется HOSTKEY_ALLOW_DESTRUCTIVE=1 в окружении сервера, " +
-        "confirm=true и повторный ввод текущего hostname сервера. Асинхронная операция: статус — через check_task.",
+        "Reinstall OS on an existing server (simplified path via eq/order_instance with id). " +
+        "DESTRUCTIVE: all disk data will be erased. Requires HOSTKEY_ALLOW_DESTRUCTIVE=1 in the server environment, " +
+        "confirm=true, and re-entering the server's current hostname. Async: status via check_task.",
       inputSchema: {
-        id: z.number().int().describe("ID сервера"),
+        id: z.number().int().describe("Server ID"),
         hostname: z
           .string()
           .describe(
-            "Текущий hostname сервера — служит подтверждением, что сервер выбран верно",
+            "Current server hostname — confirms the correct server is selected",
           ),
         os_id: z
           .number()
           .int()
-          .describe("ID новой ОС из list_os (0 + own_os=1 — без установки ОС)"),
-        root_pass: z.string().min(8).describe("Новый пароль root"),
-        soft_id: z.number().int().optional().describe("ID ПО из list_software"),
-        ssh_key: z.string().optional().describe("Публичный SSH-ключ для root"),
-        own_os: z.number().int().optional().describe("1 — не устанавливать ОС"),
+          .describe("New OS ID from list_os (0 + own_os=1 — no OS install)"),
+        root_pass: z.string().min(8).describe("New root password"),
+        soft_id: z.number().int().optional().describe("Software ID from list_software"),
+        ssh_key: z.string().optional().describe("Public SSH key for root"),
+        own_os: z.number().int().optional().describe("1 — do not install OS"),
         post_install_script: z.string().optional(),
         deploy_notify: z.boolean().optional(),
         confirm: z
           .boolean()
-          .describe("Обязателен (=true) для запуска переустановки"),
+          .describe("Required (=true) to start reinstall"),
       },
       annotations: {
         readOnlyHint: false,
@@ -198,15 +198,15 @@ export function registerOrderTools(
     async (args) => {
       if (process.env.HOSTKEY_ALLOW_DESTRUCTIVE !== "1") {
         return note(
-          "Переустановка ОС отключена конфигурацией: установите HOSTKEY_ALLOW_DESTRUCTIVE=1 в окружении MCP-сервера, " +
-            "чтобы разрешить деструктивные операции.",
+          "OS reinstall is disabled by config: set HOSTKEY_ALLOW_DESTRUCTIVE=1 in the MCP server environment " +
+            "to allow destructive operations.",
         );
       }
       const { id, hostname, confirm, ...params } = args;
       if (!confirm) {
         return note(
-          `Переустановка сервера ${id} (${hostname}) не запущена: требуется confirm=true. ` +
-            "ВНИМАНИЕ: все данные на дисках сервера будут удалены.",
+          `Reinstall of server ${id} (${hostname}) was not started: confirm=true required. ` +
+            "WARNING: all disk data on the server will be erased.",
         );
       }
       try {
@@ -219,8 +219,8 @@ export function registerOrderTools(
         return ok(
           JSON.stringify(maskSecrets(res), null, 2) +
             (typeof callback === "string"
-              ? `\n\nПереустановка запущена. Callback-ключ: ${callback}. Отслеживайте через check_task; ` +
-                "не запускайте вторую переустановку, пока идёт текущая."
+              ? `\n\nReinstall started. Callback: ${callback}. Track with check_task; ` +
+                "do not start a second reinstall while one is running."
               : ""),
         );
       } catch (e) {

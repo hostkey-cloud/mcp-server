@@ -5,7 +5,7 @@ on:
     types: [published]
 
 permissions:
-  id-token: write # OIDC для npm Trusted Publishing (provenance)
+  id-token: write # OIDC for npm Trusted Publishing (provenance)
   contents: read
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: npm ci
       - run: npm run typecheck && npm run build
-      # NPM_TOKEN не нужен: публикация через Trusted Publishing (OIDC).
-      # Предварительно настроить на npmjs.com: package -> Settings -> Trusted Publisher
-      # -> GitHub Actions -> репозиторий + этот файл workflow. См. PUBLISHING.md, шаг 2.
+      # No NPM_TOKEN: publish via Trusted Publishing (OIDC).
+      # Configure on npmjs.com: package -> Settings -> Trusted Publisher
+      # -> GitHub Actions -> this repo + workflow. See PUBLISHING.md.
       - run: npm publish --provenance --access public
