@@ -67,7 +67,7 @@ No local Node/`npx`. Point the client at the hosted endpoint and send your InvAP
 
 ```json
 {
-  "mcp.servers": {
+  "servers": {
     "hostkey-mcp-server": {
       "command": "npx",
       "args": ["-y", "hostkey-mcp-server"],
