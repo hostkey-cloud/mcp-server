@@ -119,13 +119,13 @@ export function registerServerTools(
     "search_servers_by_tag",
     {
       description:
-        "Search servers by tag name or value (tags/user_search). Returns server IDs.",
+        "Search servers by tag name or value (tags/search_user). Returns server IDs.",
       inputSchema: { value: z.string().describe("Tag search pattern") },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
     async ({ value }) => {
       try {
-        return ok(await client.call("tags", "user_search", { value }));
+        return ok(await client.call("tags", "search_user", { value }));
       } catch (e) {
         return fail(e);
       }

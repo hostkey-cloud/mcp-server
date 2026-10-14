@@ -1,6 +1,6 @@
 {
   "name": "hostkey-mcp-server",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "mcpName": "io.github.hostkey-cloud/mcp-server",
   "description": "MCP server for Hostkey .com portal (InvAPI invapi.hostkey.com): servers, power, ordering, reinstall, DNS, S3, billing",
   "license": "MIT",
@@ -12,7 +12,7 @@
     "dist"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=22.18"
   },
   "repository": {
     "type": "git",
@@ -40,12 +40,16 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
     "zod": "^3.25.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "latest",
     "tsdown": "latest",
     "tsx": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "unrun": "^0.3.1"
   }
 }

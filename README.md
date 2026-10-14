@@ -82,7 +82,7 @@ No local Node/`npx`. Point the client at the hosted endpoint and send your InvAP
 Optional: `HOSTKEY_TOKEN_TTL`, `HOSTKEY_HTTP_TIMEOUT`, `HOSTKEY_ALLOW_DESTRUCTIVE`
 (see `.env.example`).
 
-From source (Node.js ≥ 20): `npm install && npm run build`.
+From source (Node.js ≥ 22.18): `npm install && npm run build`.
 
 ## 3. Confirming dangerous operations
 
@@ -121,3 +121,9 @@ Groups (full list via `tools/list`):
 | `troubleshoot_server_prompt` | diagnostics |
 
 Or just ask: “list my servers” / “order a VPS in NL”.
+
+## Docs
+
+- [Project status](docs/PROJECT.md)
+- [Action log](docs/LOG.md)
+- [QA: hosted URL](docs/QA-REMOTE.md)

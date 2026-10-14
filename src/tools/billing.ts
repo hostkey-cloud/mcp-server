@@ -97,7 +97,7 @@ export function registerBillingTools(
     server,
     client,
     "download_invoice",
-    "Download an invoice as PDF (whmcs/download_invoice). Response usually contains PDF in Base64 — save and decode as needed.",
+    "Download an invoice as PDF (whmcs/download_invoice). InvAPI returns binary PDF; MCP returns JSON with encoding=base64 and data — decode to a .pdf file.",
     "whmcs",
     "download_invoice",
     { invoice_id: z.number().int().describe("Invoice number") },

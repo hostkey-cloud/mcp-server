@@ -20,7 +20,7 @@ export class InvApiError extends Error {
   }
 }
 
-/** Hardcoded InvAPI endpoint (invapi.hostkey.com). */
+/** Hardcoded .com endpoint. Use hostkey-mcp-server-ru for .ru. */
 const INVAPI_BASE_URL = "https://invapi.hostkey.com";
 const DEFAULT_TOKEN_TTL = 3600;
 const DEFAULT_HTTP_TIMEOUT = 60;
@@ -69,11 +69,20 @@ function flattenFields(
   return pairs;
 }
 
+function looksLikePdf(buf: Buffer, contentType: string): boolean {
+  if (contentType.includes("application/pdf")) return true;
+  if (buf.length >= 5 && buf.subarray(0, 5).toString("latin1") === "%PDF-")
+    return true;
+  return false;
+}
+
 interface CallOptions {
   /** Attach session token (default true). */
   auth?: boolean;
   /** Internal: avoid infinite relogin loops. */
   retried?: boolean;
+  /** Optional abort from MCP request cancellation. */
+  signal?: AbortSignal;
 }
 
 export class InvApiClient {
@@ -98,17 +107,21 @@ export class InvApiClient {
     this.httpTimeout = options.httpTimeoutSeconds ?? DEFAULT_HTTP_TIMEOUT;
   }
 
-  private async ensureToken(): Promise<string> {
+  private async ensureToken(signal?: AbortSignal): Promise<string> {
     // Refresh a minute early so we don't hit expiry mid-request.
     if (this.token && Date.now() < this.tokenExpiresAtMs - 60_000)
       return this.token;
 
-    const res = (await this.rawPost("auth", {
-      action: "login",
-      key: this.apiKey,
-      ttl: this.tokenTtl,
-      fix_ip: 0, // don't pin the token to one IP
-    })) as Record<string, unknown>;
+    const res = (await this.rawPost(
+      "auth",
+      {
+        action: "login",
+        key: this.apiKey,
+        ttl: this.tokenTtl,
+        fix_ip: 0, // don't pin the token to one IP
+      },
+      signal,
+    )) as Record<string, unknown>;
 
     // Token lives under result.token; flat token/scope is a fallback.
     const nested =
@@ -138,6 +151,7 @@ export class InvApiClient {
   private async rawPost(
     resource: string,
     fields: Record<string, unknown>,
+    outerSignal?: AbortSignal,
   ): Promise<unknown> {
     const url = `${this.baseUrl}/${resource}.php`;
     const body = new URLSearchParams();
@@ -145,6 +159,12 @@ export class InvApiClient {
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.httpTimeout * 1000);
+    const onOuterAbort = () => controller.abort();
+    if (outerSignal) {
+      if (outerSignal.aborted) controller.abort();
+      else outerSignal.addEventListener("abort", onOuterAbort, { once: true });
+    }
+
     let res: Response;
     try {
       res = await fetch(url, {
@@ -156,18 +176,46 @@ export class InvApiClient {
     } catch (e) {
       const reason =
         e instanceof Error && e.name === "AbortError"
-          ? `timeout ${this.httpTimeout}s`
+          ? outerSignal?.aborted
+            ? "cancelled"
+            : `timeout ${this.httpTimeout}s`
           : String(e);
       throw new InvApiError(`InvAPI ${resource}: network error (${reason})`);
     } finally {
       clearTimeout(timer);
+      outerSignal?.removeEventListener("abort", onOuterAbort);
     }
 
-    const text = await res.text();
+    const buf = Buffer.from(await res.arrayBuffer());
+    const contentType = (res.headers.get("content-type") ?? "").toLowerCase();
+
+    // Binary PDF (e.g. whmcs/download_invoice) — HTTP 200 with %PDF body.
+    if (res.ok && looksLikePdf(buf, contentType)) {
+      return {
+        result: "OK",
+        content_type: "application/pdf",
+        encoding: "base64",
+        byte_length: buf.length,
+        data: buf.toString("base64"),
+        note: "PDF as base64. Decode and save as .pdf.",
+      };
+    }
+
+    const text = buf.toString("utf8");
     let json: unknown;
     try {
       json = JSON.parse(text);
     } catch {
+      if (res.ok) {
+        // HTML/plain success bodies (misconfigured actions historically returned HTML).
+        return {
+          result: "OK",
+          content_type: contentType || "text/plain",
+          encoding: "text",
+          data: text,
+          note: "InvAPI returned a non-JSON body; raw text included.",
+        };
+      }
       throw new InvApiError(
         `InvAPI ${resource}: HTTP ${res.status}, non-JSON: ${text.slice(0, 300)}`,
         res.status,
@@ -196,10 +244,10 @@ export class InvApiClient {
   ): Promise<unknown> {
     const auth = opts.auth ?? true;
     const fields: Record<string, unknown> = { action, ...params };
-    if (auth) fields.token = await this.ensureToken();
+    if (auth) fields.token = await this.ensureToken(opts.signal);
 
     try {
-      const res = await this.rawPost(resource, fields);
+      const res = await this.rawPost(resource, fields, opts.signal);
       if (
         res &&
         typeof res === "object" &&
@@ -233,12 +281,12 @@ export class InvApiClient {
   }
 
   /** Check async job status by callback key (no auth). */
-  async checkTask(callbackKey: string): Promise<unknown> {
+  async checkTask(callbackKey: string, signal?: AbortSignal): Promise<unknown> {
     return this.call(
       "eq_callback",
       "check",
       { key: callbackKey },
-      { auth: false },
+      { auth: false, signal },
     );
   }
 }

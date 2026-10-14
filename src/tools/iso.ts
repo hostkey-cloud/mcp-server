@@ -12,15 +12,11 @@ export function registerIsoTools(
     server,
     client,
     "list_iso_images",
-    "List available ISO images (iso/list_iso). For client keys, server_id is required — images are matched to the specific server.",
+    "List available ISO images (iso/list_iso). InvAPI requires a server id (for client keys); images are matched to the server configuration.",
     "iso",
     "list_iso",
     {
-      server_id: z
-        .number()
-        .int()
-        .optional()
-        .describe("Server ID (required for client keys)"),
+      id: z.number().int().describe("Server ID in InvAPI (required)"),
     },
   );
 
