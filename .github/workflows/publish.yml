@@ -13,14 +13,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Do not set registry-url here: it writes .npmrc with NODE_AUTH_TOKEN and
+      # makes npm skip OIDC Trusted Publishing (403 OIDC permission denied).
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-          registry-url: https://registry.npmjs.org
       - run: npm ci
       - run: npm run typecheck && npm run build
       # No NPM_TOKEN: publish via Trusted Publishing (OIDC).
       # Configure on npmjs.com: package -> Settings -> Trusted Publisher
-      # -> GitHub Actions -> this repo + workflow. See PUBLISHING.md.
+      # -> GitHub Actions -> this repo + workflow file Publish (.github/workflows/publish.yml).
       - run: npm publish --provenance --access public
