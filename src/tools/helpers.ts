@@ -38,7 +38,10 @@ export const confirmField = {
 
 type Schema = Record<string, z.ZodTypeAny>;
 type Params = Record<string, unknown>;
-type MapFn = (args: Params) => Params;
+export type MapFn = (
+  args: Params,
+  client: InvApiClient,
+) => Params | Promise<Params>;
 
 const READ_ANNOTATIONS = { readOnlyHint: true, openWorldHint: true } as const;
 
@@ -66,7 +69,9 @@ export function registerRead(
     { description, inputSchema, annotations: READ_ANNOTATIONS },
     async (args) => {
       try {
-        const params = opts.map ? opts.map(args as Params) : (args as Params);
+        const params = opts.map
+          ? await opts.map(args as Params, client)
+          : (args as Params);
         return ok(
           await client.call(resource, action, params, { auth: opts.auth }),
         );
@@ -112,7 +117,7 @@ export function registerAction(
         );
       }
       try {
-        const params = opts.map ? opts.map(rest) : rest;
+        const params = opts.map ? await opts.map(rest, client) : rest;
         return ok(withAsyncHint(await client.call(resource, action, params)));
       } catch (e) {
         return fail(e);

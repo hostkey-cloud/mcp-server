@@ -3,28 +3,61 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { InvApiClient } from "../client.js";
 import { registerRead, registerAction } from "./helpers.js";
 
-/** InvAPI expects `s3uid` (string or numeric id from s3_get_users / create). */
+/** InvAPI expects string `s3uid` from s3_get_users (not the numeric row id alone). */
 const s3uidSchema = z
   .union([z.string(), z.number()])
   .describe(
-    "S3 account UID (s3uid) from s3_get_users or create_account/order. Numeric id (e.g. 13457) or string uid.",
+    "S3 account UID from s3_get_users.s3uid (string). Numeric get_users.id is also accepted and resolved.",
   );
 
-const s3uidRequired = { s3uid: s3uidSchema };
+/** Either s3uid or account_id required at call time (resolved in mapS3Account). */
+const s3uidRequired = {
+  s3uid: s3uidSchema
+    .optional()
+    .describe("S3 account UID from s3_get_users.s3uid"),
+  account_id: z
+    .number()
+    .int()
+    .optional()
+    .describe("Numeric id from s3_get_users.id (alias; resolved to s3uid)"),
+};
 const s3uidOptional = {
   s3uid: s3uidSchema.optional().describe(
     "S3 account UID; omit only if the token is bound to a single S3 account",
   ),
+  account_id: z
+    .number()
+    .int()
+    .optional()
+    .describe("Deprecated alias for s3uid / get_users.id"),
 };
 
-/** Compat: older clients sent account_id — map to s3uid. */
-function mapS3Account(args: Record<string, unknown>): Record<string, unknown> {
+/** Map account_id → s3uid; resolve numeric ids via s3/get_users. */
+async function mapS3Account(
+  args: Record<string, unknown>,
+  client: InvApiClient,
+): Promise<Record<string, unknown>> {
   const out: Record<string, unknown> = { ...args };
   if (out.s3uid == null && out.account_id != null) {
     out.s3uid = out.account_id;
   }
   delete out.account_id;
-  if (out.s3uid != null) out.s3uid = String(out.s3uid);
+  if (out.s3uid == null) return out;
+  const raw = String(out.s3uid);
+  if (!/^\d+$/.test(raw)) {
+    out.s3uid = raw;
+    return out;
+  }
+  const users = (await client.call("s3", "get_users", {})) as {
+    s3_users?: Array<{ id?: number | string; s3uid?: string }>;
+  };
+  const hit = (users.s3_users ?? []).find(
+    (u) => String(u.id) === raw || String(u.s3uid) === raw,
+  );
+  if (!hit?.s3uid) {
+    throw new Error(`S3 account not found for id/s3uid=${raw}`);
+  }
+  out.s3uid = String(hit.s3uid);
   return out;
 }
 
@@ -59,17 +92,10 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
     server,
     client,
     "s3_get_buckets",
-    "List S3 account buckets and usage (s3/get_buckets_rmq). Pass s3uid from s3_get_users. May return a task key — then track with check_task. (Note: s3/get_buckets is not available on current InvAPI.)",
+    "List S3 account buckets and usage (s3/get_buckets_rmq). Pass s3uid or account_id from s3_get_users. May return a task key — then track with check_task.",
     "s3",
     "get_buckets_rmq",
-    {
-      ...s3uidRequired,
-      account_id: z
-        .number()
-        .int()
-        .optional()
-        .describe("Deprecated alias for s3uid; prefer s3uid"),
-    },
+    s3uidRequired,
     { map: mapS3Account },
   );
 
@@ -80,14 +106,7 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
     "Same as s3_get_buckets: list buckets via s3/get_buckets_rmq. Prefer s3_get_buckets.",
     "s3",
     "get_buckets_rmq",
-    {
-      ...s3uidRequired,
-      account_id: z
-        .number()
-        .int()
-        .optional()
-        .describe("Deprecated alias for s3uid; prefer s3uid"),
-    },
+    s3uidRequired,
     { map: mapS3Account },
   );
 
@@ -104,7 +123,6 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
       limit: z.number().int().optional().describe("Page size"),
       search: z.string().optional().describe("Search string by file name"),
       ...s3uidOptional,
-      account_id: z.number().int().optional().describe("Deprecated alias for s3uid"),
     },
     { map: mapS3Account },
   );
@@ -134,7 +152,6 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
     {
       key_type: z.enum(["access_key", "secret_key"]).describe("Key type"),
       ...s3uidOptional,
-      account_id: z.number().int().optional().describe("Deprecated alias for s3uid"),
     },
     { map: mapS3Account },
   );
@@ -166,7 +183,6 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
     {
       bucket: z.string().describe("Bucket name"),
       ...s3uidOptional,
-      account_id: z.number().int().optional().describe("Deprecated alias for s3uid"),
     },
     { map: mapS3Account },
   );
@@ -198,7 +214,6 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
       bucket: z.string().describe("Bucket name"),
       file: z.string().describe("File key (name)"),
       ...s3uidOptional,
-      account_id: z.number().int().optional().describe("Deprecated alias for s3uid"),
     },
     { destructive: true, map: mapS3Account },
   );
@@ -213,7 +228,6 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
     {
       bucket: z.string().describe("Bucket name"),
       ...s3uidOptional,
-      account_id: z.number().int().optional().describe("Deprecated alias for s3uid"),
     },
     { destructive: true, map: mapS3Account },
   );
@@ -227,7 +241,6 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
     "delete_account",
     {
       ...s3uidOptional,
-      account_id: z.number().int().optional().describe("Deprecated alias for s3uid"),
     },
     { destructive: true, envGuard: true, map: mapS3Account },
   );
@@ -241,7 +254,6 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
     "delete_payment_account",
     {
       ...s3uidOptional,
-      account_id: z.number().int().optional().describe("Deprecated alias for s3uid"),
     },
     { destructive: true, envGuard: true, map: mapS3Account },
   );
@@ -255,7 +267,6 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
     "cancel_payment_account_deletion",
     {
       ...s3uidOptional,
-      account_id: z.number().int().optional().describe("Deprecated alias for s3uid"),
     },
     { map: mapS3Account },
   );
@@ -269,7 +280,6 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
     "update_traffic_info",
     {
       ...s3uidOptional,
-      account_id: z.number().int().optional().describe("Deprecated alias for s3uid"),
     },
     { map: mapS3Account },
   );

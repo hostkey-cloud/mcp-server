@@ -60,20 +60,39 @@ export function registerIsoTools(
     client,
     "mount_iso",
     "Mount an ISO image on a server (iso/mount_iso). Async operation. Callback key returned — track with check_task. " +
-      "Take image ID/name from list_iso_images or get_uploaded_isos.",
+      "InvAPI expects `iso` (name or id). Pass iso, or name / iso_id aliases.",
     "iso",
     "mount_iso",
     {
       id: z.number().int().describe("Server ID"),
+      iso: z
+        .union([z.string(), z.number()])
+        .optional()
+        .describe("ISO name or id (InvAPI field `iso`)"),
       iso_id: z
         .number()
         .int()
         .optional()
-        .describe("Image ID from list_iso_images"),
+        .describe("Alias: image ID from list_iso_images → iso"),
       name: z
         .string()
         .optional()
-        .describe("Image name (if identifying by name)"),
+        .describe("Alias: image name / iso_name → iso"),
+    },
+    {
+      map: (args) => {
+        const out: Record<string, unknown> = { ...args };
+        const iso = out.iso ?? out.name ?? out.iso_id;
+        delete out.name;
+        delete out.iso_id;
+        if (iso == null || String(iso).trim() === "") {
+          throw new Error(
+            "Provide iso (InvAPI), or name / iso_id from list_iso_images",
+          );
+        }
+        out.iso = String(iso);
+        return out;
+      },
     },
   );
 
