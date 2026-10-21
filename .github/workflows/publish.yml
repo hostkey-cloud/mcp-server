@@ -3,13 +3,20 @@ name: Publish
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      registry_only:
+        description: "Skip npm; only publish server.json to MCP Registry (e.g. after a manual npm publish)"
+        type: boolean
+        default: false
 
 permissions:
-  id-token: write # OIDC for npm Trusted Publishing
+  id-token: write # OIDC for npm Trusted Publishing + mcp-publisher github-oidc
   contents: read
 
 jobs:
   npm:
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.registry_only == false)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,5 +42,49 @@ jobs:
       #   Repository: mcp-server
       #   Workflow filename: publish.yml
       #   Allowed actions: enable "npm publish" (not only stage)
-      # Provenance is automatic with Trusted Publishing; --provenance is fine too.
       - run: npm publish --access public --provenance
+
+  mcp-registry:
+    # After npm (release), or alone via Actions → Publish → registry_only.
+    # Registry validates packages[].version against a live npm release.
+    needs: npm
+    if: |
+      always() && (
+        needs.npm.result == 'success' ||
+        (github.event_name == 'workflow_dispatch' && inputs.registry_only == true)
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Wait until npm serves this version
+        run: |
+          set -euo pipefail
+          PKG=$(jq -r '.packages[0].identifier' server.json)
+          VER=$(jq -r '.version' server.json)
+          echo "Waiting for $PKG@$VER on npm…"
+          for i in $(seq 1 36); do
+            if npm view "$PKG@$VER" version >/dev/null 2>&1; then
+              echo "Found $PKG@$VER"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::$PKG@$VER not visible on npm after ~3m"
+          exit 1
+
+      - name: Install mcp-publisher
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" \
+            | tar xz mcp-publisher
+
+      # io.github.<owner>/<repo> → GitHub OIDC, no PAT/secret.
+      - name: Authenticate to MCP Registry
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish server.json to MCP Registry
+        run: ./mcp-publisher publish
