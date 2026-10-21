@@ -67,14 +67,14 @@ jobs:
           PKG=$(jq -r '.packages[0].identifier' server.json)
           VER=$(jq -r '.version' server.json)
           echo "Waiting for $PKG@$VER on npm…"
-          for i in $(seq 1 36); do
+          for i in $(seq 1 90); do
             if npm view "$PKG@$VER" version >/dev/null 2>&1; then
               echo "Found $PKG@$VER"
               exit 0
             fi
-            sleep 5
+            sleep 10
           done
-          echo "::error::$PKG@$VER not visible on npm after ~3m"
+          echo "::error::$PKG@$VER not visible on npm after ~15m"
           exit 1
 
       - name: Install mcp-publisher
