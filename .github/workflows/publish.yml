@@ -19,12 +19,12 @@ jobs:
     if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.registry_only == false)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Node 24 ships npm >= 11.5.1 (required for Trusted Publishing / OIDC).
       # registry-url is required by current npm docs; with id-token: write the
       # CLI uses OIDC and does not need NODE_AUTH_TOKEN / NPM_TOKEN secrets.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
@@ -55,9 +55,9 @@ jobs:
       )
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "24"
 
