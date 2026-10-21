@@ -27,10 +27,12 @@ const DEFAULT_HTTP_TIMEOUT = 60;
 
 const SECRET_KEYS = new Set([
   "token",
-  "key",
+  "key", // show_key payload; get_files also has key — prefer original_key there
   "root_pass",
   "password",
   "api_key",
+  "access_key",
+  "secret_key",
 ]);
 
 /** Hide secrets in logged/returned payloads. */

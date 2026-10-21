@@ -61,6 +61,71 @@ async function mapS3Account(
   return out;
 }
 
+/** InvAPI uses `bucket_name` (not `bucket`) on create/delete/list-files. */
+function mapBucketName(args: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...args };
+  if (out.bucket != null && out.bucket_name == null) {
+    out.bucket_name = out.bucket;
+  }
+  delete out.bucket;
+  return out;
+}
+
+async function mapS3Bucket(
+  args: Record<string, unknown>,
+  client: InvApiClient,
+): Promise<Record<string, unknown>> {
+  return mapBucketName(await mapS3Account(args, client));
+}
+
+/** get_files: bucket_name + max_keys (+ optional continuation_token). */
+async function mapGetFiles(
+  args: Record<string, unknown>,
+  client: InvApiClient,
+): Promise<Record<string, unknown>> {
+  const out = await mapS3Bucket(args, client);
+  if (out.limit != null && out.max_keys == null) {
+    out.max_keys = out.limit;
+  }
+  delete out.limit;
+  // InvAPI paginates via continuation_token, not page numbers.
+  delete out.page;
+  return out;
+}
+
+/** show_key: InvAPI expects `s3_key`, not `key_type`. */
+async function mapShowKey(
+  args: Record<string, unknown>,
+  client: InvApiClient,
+): Promise<Record<string, unknown>> {
+  const out = await mapS3Account(args, client);
+  if (out.key_type != null && out.s3_key == null) {
+    out.s3_key = out.key_type;
+  }
+  delete out.key_type;
+  return out;
+}
+
+/** delete_file: bucket_name + key (file path). */
+async function mapDeleteFile(
+  args: Record<string, unknown>,
+  client: InvApiClient,
+): Promise<Record<string, unknown>> {
+  const out = await mapS3Bucket(args, client);
+  if (out.file != null && out.key == null) {
+    out.key = out.file;
+  }
+  delete out.file;
+  return out;
+}
+
+/** create_account: bucket → bucket_name. */
+function mapCreateAccount(
+  args: Record<string, unknown>,
+): Record<string, unknown> {
+  return mapBucketName(args);
+}
+
 /** S3 storage (s3.php). create_order is paid; some deletes need HOSTKEY_ALLOW_DESTRUCTIVE. */
 export function registerS3Tools(server: McpServer, client: InvApiClient): void {
   registerRead(
@@ -119,12 +184,20 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
     "get_files",
     {
       bucket: z.string().describe("Bucket name"),
-      page: z.number().int().optional().describe("Page number"),
-      limit: z.number().int().optional().describe("Page size"),
+      page: z
+        .number()
+        .int()
+        .optional()
+        .describe("Ignored; use search / limit. InvAPI paginates with continuation_token."),
+      limit: z
+        .number()
+        .int()
+        .optional()
+        .describe("Page size (mapped to InvAPI max_keys, max 100)"),
       search: z.string().optional().describe("Search string by file name"),
       ...s3uidOptional,
     },
-    { map: mapS3Account },
+    { map: mapGetFiles },
   );
 
   registerRead(
@@ -153,7 +226,7 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
       key_type: z.enum(["access_key", "secret_key"]).describe("Key type"),
       ...s3uidOptional,
     },
-    { map: mapS3Account },
+    { map: mapShowKey },
   );
 
   registerAction(
@@ -171,6 +244,7 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
       location: z.string().optional().describe("Location from s3_get_locations"),
       bucket: z.string().optional().describe("Initial bucket name"),
     },
+    { map: mapCreateAccount },
   );
 
   registerAction(
@@ -184,7 +258,7 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
       bucket: z.string().describe("Bucket name"),
       ...s3uidOptional,
     },
-    { map: mapS3Account },
+    { map: mapS3Bucket },
   );
 
   registerAction(
@@ -215,7 +289,7 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
       file: z.string().describe("File key (name)"),
       ...s3uidOptional,
     },
-    { destructive: true, map: mapS3Account },
+    { destructive: true, map: mapDeleteFile },
   );
 
   registerAction(
@@ -229,7 +303,7 @@ export function registerS3Tools(server: McpServer, client: InvApiClient): void {
       bucket: z.string().describe("Bucket name"),
       ...s3uidOptional,
     },
-    { destructive: true, map: mapS3Account },
+    { destructive: true, map: mapS3Bucket },
   );
 
   registerAction(
