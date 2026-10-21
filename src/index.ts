@@ -25,7 +25,7 @@ import { registerRawTool } from "./tools/raw.js";
 import { registerPrompts } from "./prompts.js";
 
 const SERVER_NAME = "hostkey-mcp-server";
-const SERVER_VERSION = "1.0.5";
+const SERVER_VERSION = "1.0.6";
 const HOSTED_MCP_URL = "https://mcp.hostkey.com/mcp";
 const SERVER_DESCRIPTION =
   "MCP server for Hostkey .com portal (InvAPI invapi.hostkey.com): servers, power, ordering, reinstall, DNS, S3, billing";
