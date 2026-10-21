@@ -87,4 +87,28 @@ jobs:
         run: ./mcp-publisher login github-oidc
 
       - name: Publish server.json to MCP Registry
-        run: ./mcp-publisher publish
+        run: |
+          set -euo pipefail
+          NAME=$(jq -r '.name' server.json)
+          VER=$(jq -r '.version' server.json)
+          ENC=$(printf '%s' "$NAME" | jq -sRr @uri)
+          CODE=$(curl -sS -o /tmp/reg.json -w '%{http_code}' \
+            "https://registry.modelcontextprotocol.io/v0.1/servers/${ENC}/versions/${VER}" || true)
+          if [ "$CODE" = "200" ]; then
+            echo "Already published: $NAME@$VER — skipping"
+            exit 0
+          fi
+          set +e
+          OUT=$(./mcp-publisher publish 2>&1)
+          STATUS=$?
+          set -e
+          echo "$OUT"
+          if [ $STATUS -eq 0 ]; then
+            exit 0
+          fi
+          # Idempotent re-runs (e.g. registry_only after a successful publish).
+          if echo "$OUT" | grep -qi 'duplicate version'; then
+            echo "Version already on registry — treating as success"
+            exit 0
+          fi
+          exit $STATUS
