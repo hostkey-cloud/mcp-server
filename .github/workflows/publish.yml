@@ -5,7 +5,7 @@ on:
     types: [published]
 
 permissions:
-  id-token: write # OIDC for npm Trusted Publishing (provenance)
+  id-token: write # OIDC for npm Trusted Publishing
   contents: read
 
 jobs:
@@ -13,15 +13,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Do not set registry-url here: it writes .npmrc with NODE_AUTH_TOKEN and
-      # makes npm skip OIDC Trusted Publishing (403 OIDC permission denied).
+
+      # Node 24 ships npm >= 11.5.1 (required for Trusted Publishing / OIDC).
+      # registry-url is required by current npm docs; with id-token: write the
+      # CLI uses OIDC and does not need NODE_AUTH_TOKEN / NPM_TOKEN secrets.
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
           cache: npm
+
+      - name: Ensure npm CLI supports Trusted Publishing
+        run: npm install -g npm@latest
+
       - run: npm ci
       - run: npm run typecheck && npm run build
-      # No NPM_TOKEN: publish via Trusted Publishing (OIDC).
-      # Configure on npmjs.com: package -> Settings -> Trusted Publisher
-      # -> GitHub Actions -> this repo + workflow file Publish (.github/workflows/publish.yml).
-      - run: npm publish --provenance --access public
+
+      # No NPM_TOKEN. Configure Trusted Publisher on npmjs.com first:
+      # package → Settings → Trusted Publisher → GitHub Actions
+      #   Organization: hostkey-cloud
+      #   Repository: mcp-server
+      #   Workflow filename: publish.yml
+      #   Allowed actions: enable "npm publish" (not only stage)
+      # Provenance is automatic with Trusted Publishing; --provenance is fine too.
+      - run: npm publish --access public --provenance
