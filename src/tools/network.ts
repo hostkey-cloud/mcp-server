@@ -15,10 +15,18 @@ export function registerNetworkTools(
     server,
     client,
     "get_network_status",
-    "Server network interface status (net/get_status): port, switch, VLAN, speed, MAC, link status.",
+    "Server network interface status (net/get_status): port, switch, VLAN, speed, MAC, link status. Optional port limits the query to one interface (useful when another NIC has no upstream_id).",
     "net",
     "get_status",
-    idField,
+    {
+      ...idField,
+      port: z
+        .string()
+        .optional()
+        .describe(
+          "Optional physical/logical interface or switch port (e.g. eth0). Omit to query all; if InvAPI fails on an unmapped NIC, retry with a mapped port from get_server.",
+        ),
+    },
   );
 
   registerRead(

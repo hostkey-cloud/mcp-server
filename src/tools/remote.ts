@@ -70,10 +70,27 @@ export function registerRemoteTools(
     server,
     client,
     "add_static_nat",
-    "Create a static DNAT to the server IPMI (nat/add_static_nat): public IP for IPMI access. Async operation. Track with check_task.",
+    "Create a static DNAT to the server IPMI (nat/add_static_nat): public IP for classic IPMI access. Distinct from Secure IPMI Proxy in the panel — Proxy Active alone may not satisfy this call. Async; track with check_task. On server_ipmi_acl_required pass ip_acl.",
     "nat",
     "add_static_nat",
-    idField,
+    {
+      ...idField,
+      ip_acl: z
+        .string()
+        .optional()
+        .describe(
+          "Client IP(s) allowed to reach IPMI via NAT (InvAPI ip_acl). Required by some accounts when panel Proxy ACL is not enough.",
+        ),
+      secured: z
+        .union([z.boolean(), z.number().int()])
+        .optional()
+        .describe("Secured NAT flag if supported by InvAPI"),
+      ttl: z
+        .number()
+        .int()
+        .optional()
+        .describe("NAT lifetime in seconds, if supported"),
+    },
   );
 
   registerAction(

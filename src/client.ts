@@ -87,6 +87,76 @@ interface CallOptions {
   signal?: AbortSignal;
 }
 
+const NETWORK_RETRY_DELAYS_MS = [200, 500] as const;
+
+/** Success / in-progress InvAPI result values that must not become MCP errors. */
+const INVAPI_OK_RESULTS = new Set([
+  "OK",
+  "ok",
+  "success",
+  "Success",
+  "Not ready", // eq_callback/check — job still running
+]);
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function formatFetchCause(e: unknown): string {
+  if (!(e instanceof Error)) return String(e);
+  const parts = [e.message];
+  let cur: unknown = e.cause;
+  let depth = 0;
+  while (cur && depth < 3) {
+    if (cur instanceof Error) {
+      parts.push(cur.message);
+      const code = (cur as NodeJS.ErrnoException).code;
+      if (code) parts.push(`code=${code}`);
+      cur = cur.cause;
+    } else {
+      parts.push(String(cur));
+      break;
+    }
+    depth += 1;
+  }
+  return parts.join(" | ");
+}
+
+/**
+ * Return an error message if this InvAPI JSON body is a failure.
+ * Only `result === -1` was historically treated as failure; InvAPI also returns
+ * `result: "error"`, negative numbers (-3), and string "-1".
+ */
+export function invApiFailureMessage(res: unknown): string | null {
+  if (!res || typeof res !== "object") return null;
+  const body = res as Record<string, unknown>;
+  const result = body.result;
+
+  if (result === undefined || result === null) {
+    if (body.error != null && body.error !== "") return String(body.error);
+    if (typeof body.code === "number" && body.code < 0) {
+      return String(body.message ?? body.error ?? `code ${body.code}`);
+    }
+    return null;
+  }
+  if (typeof result === "object") return null; // auth/login nested token
+  if (typeof result === "string" && INVAPI_OK_RESULTS.has(result)) return null;
+
+  if (result === "error" || result === "ERROR") {
+    return String(body.message ?? body.error ?? "error");
+  }
+  if (typeof result === "number" && result < 0) {
+    return String(body.error ?? body.message ?? `result ${result}`);
+  }
+  if (typeof result === "string" && /^-?\d+$/.test(result) && Number(result) < 0) {
+    return String(body.error ?? body.message ?? `result ${result}`);
+  }
+  if (typeof body.code === "number" && body.code < 0) {
+    return String(body.message ?? body.error ?? `code ${body.code}`);
+  }
+  return null;
+}
+
 export class InvApiClient {
   private readonly apiKey: string;
   private readonly baseUrl: string;
@@ -167,25 +237,43 @@ export class InvApiClient {
       else outerSignal.addEventListener("abort", onOuterAbort, { once: true });
     }
 
-    let res: Response;
+    let res: Response | undefined;
+    let lastNetworkError: unknown;
+    const maxAttempts = 1 + NETWORK_RETRY_DELAYS_MS.length;
     try {
-      res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body,
-        signal: controller.signal,
-      });
-    } catch (e) {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body,
+            signal: controller.signal,
+          });
+          lastNetworkError = undefined;
+          break;
+        } catch (e) {
+          lastNetworkError = e;
+          const isAbort = e instanceof Error && e.name === "AbortError";
+          // Do not retry caller cancel or hard timeouts.
+          if (isAbort || outerSignal?.aborted) break;
+          if (attempt >= maxAttempts - 1) break;
+          await sleep(NETWORK_RETRY_DELAYS_MS[attempt] ?? 500);
+        }
+      }
+    } finally {
+      clearTimeout(timer);
+      outerSignal?.removeEventListener("abort", onOuterAbort);
+    }
+
+    if (!res) {
+      const e = lastNetworkError;
       const reason =
         e instanceof Error && e.name === "AbortError"
           ? outerSignal?.aborted
             ? "cancelled"
             : `timeout ${this.httpTimeout}s`
-          : String(e);
+          : formatFetchCause(e);
       throw new InvApiError(`InvAPI ${resource}: network error (${reason})`);
-    } finally {
-      clearTimeout(timer);
-      outerSignal?.removeEventListener("abort", onOuterAbort);
     }
 
     const buf = Buffer.from(await res.arrayBuffer());
@@ -250,13 +338,10 @@ export class InvApiClient {
 
     try {
       const res = await this.rawPost(resource, fields, opts.signal);
-      if (
-        res &&
-        typeof res === "object" &&
-        (res as Record<string, unknown>).result === -1
-      ) {
+      const failure = invApiFailureMessage(res);
+      if (failure != null) {
         throw new InvApiError(
-          `InvAPI ${resource}/${action}: ${String((res as Record<string, unknown>).error ?? "unknown error")}`,
+          `InvAPI ${resource}/${action}: ${failure}`,
           undefined,
           maskSecrets(res),
         );
